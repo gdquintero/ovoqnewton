@@ -1,0 +1,364 @@
+  If you have a LOVO problem type 1
+  Number of observations:
+  Number of outliers:
+  Percentage of error of each outlier:
+  p parameter of LOVO:
+  If want to eliminate auxiliar printints type 1
+  Default = 1
+  Training Neural Networks with sysredneu
+
+  Memory is reserved for supporting        11410  coefficients 
+  If the independent terms y_i are only 0 or 1 type 1
+  Default: 0
+  Number of function psi :
+  psi = 3 is RELU except last level
+  Default=3
+  If want detailed printing type 1, else type 0
+  Default = 0
+  Essential printing every how many iterations?
+  Default = 1
+  If you want to use and detect rank with MGS, type 1
+  otherwise type 0. Default: 0
+
+  Under-relaxation parameter:
+  Default = 1
+
+  Under-relaxation parameter:   1.0000000000000000     
+
+  Number refinements (recall that 0 is "pure newton"):
+  Default=0
+
+  Refinements following each Newton iteration:           0
+
+
+  Maximal number of iterations, Default=100:
+
+  Maximal number of iterations allowed:         100
+
+  Stopping delta regarding the norm of increment:
+  Default = 0
+  "Small" delta used for stopping by increment norm:   0.0000000000000000     
+  Stopping epsilon regarding RMSD of residuals:
+  Default = 0.0001
+
+  "Small" epsilon used for RMSD residual stopping:   1.0000000000000000E-004
+
+  Data generation:
+  If you want Saint Venant given in fort.106, type 1
+  fort.106 contains 3060 observations, corresponding
+  to 30 days
+  If you want Saint Venant given in fort.107, type 2
+  fort.107 contains 1442 observations, corresponding
+  to 30 days
+  Otherwise, type 3
+  Default = 3
+  Dimension of x :
+  Default = 10
+  nx =           10  nobs =          100
+  Data generation
+  Type 1 for all-random generation
+  Type 2 for function ||x||^2
+  Type 3 for function sum sin(x_i)
+  Type 4 for characteristic function of y > ||x||^2
+  Default: 2 
+
+  Depth of the Neural Network desired = 
+  Default = 10
+
+  Depth =           10
+
+  The number of components of level          10  is set
+  equal to 1 by this code
+
+  Type the number of components of the first           9  levels
+  Default = (9,...,9)
+  If you want default type 0
+
+  Components of level           1   (Rows of A number           1 ):           9
+  Components of level           2   (Rows of A number           2 ):           9
+  Components of level           3   (Rows of A number           3 ):           9
+  Components of level           4   (Rows of A number           4 ):           9
+  Components of level           5   (Rows of A number           5 ):           9
+  Components of level           6   (Rows of A number           6 ):           9
+  Components of level           7   (Rows of A number           7 ):           9
+  Components of level           8   (Rows of A number           8 ):           9
+  Components of level           9   (Rows of A number           9 ):           9
+  Components of level          10   (Rows of A number          10 ):           1
+  Total number of coefficients (A, b) :         829
+
+  To continue type 1
+  Generation of Initial NN for sysredneu
+  If you want a random generation type 1
+
+  If you want to use the NN that comes 
+  from previous run, type 2
+  Default: 1
+  Initial NN is random
+  In this problem n_z =           10   nobs=         100
+  Number of coefficients to be estimated:         829
+
+
+  Iteration            0
+  Error (max diff between predicted & observed):   45.817973244819754     
+  Sum of squares:   73667.761379248608       RMSD =   38.384309653619830     
+  Sup norm of the gradient:   93286.189653243113     
+  Number of iterations up to now:           0
+  nabs =          50  maxrow =          50
+  Maximal diagonal of aat:   63834.824335808647     
+  For augmentation z=   0.0000000000000000       Matrix aat is posdef
+  Sup norm of the increment s:   9.0016285631692311E-002
+  The increment has been computed but we want to know
+  whether the objective function decreased
+  rmsd trial =   7.4423092817193748       rmsd current=   38.384309653619830     
+  ftrial(1) before go to 1:   8.6493223093755169     
+  Comparison of Ab versus previous Abtrial (=?):
+
+
+  Iteration            1
+  Error (max diff between predicted & observed):   8.7197414001129729     
+  Sum of squares:   2769.3983722383177       RMSD =   7.4423092817193748     
+  Sup norm of the gradient:   14510.364641411878     
+  Number of iterations up to now:           1
+  nabs =          50  maxrow =          50
+  Maximal diagonal of aat:   40528.389800365629     
+  For augmentation z=   0.0000000000000000       Matrix aat is posdef
+  Sup norm of the increment s:  0.45063280420416690     
+  The increment has been computed but we want to know
+  whether the objective function decreased
+  rmsd trial =  0.66711766981629395       rmsd current=   7.4423092817193748     
+  ftrial(1) before go to 1:  0.93706147778550686     
+  Comparison of Ab versus previous Abtrial (=?):
+
+
+  Iteration            2
+  Error (max diff between predicted & observed):   1.0859277858865799     
+  Sum of squares:   22.252299269056085       RMSD =  0.66711766981629395     
+  Sup norm of the gradient:   95.435227281327570     
+  Number of iterations up to now:           2
+  nabs =          50  maxrow =          50
+  Maximal diagonal of aat:   48135.341494037995     
+  For augmentation z=   0.0000000000000000       Matrix aat is posdef
+  Sup norm of the increment s:  0.34613022527564385     
+  The increment has been computed but we want to know
+  whether the objective function decreased
+  rmsd trial =  0.74561157764922081       rmsd current=  0.66711766981629395     
+  rmsd trial was bigger than rmsd current
+  New regularization:  0.10000000000000001     
+  The increment has been computed but we want to know
+  whether the objective function decreased
+  rmsd trial =  0.72435552761557365       rmsd current=  0.66711766981629395     
+  rmsd trial was bigger than rmsd current
+  New regularization:   1.0000000000000000     
+  The increment has been computed but we want to know
+  whether the objective function decreased
+  rmsd trial =  0.51564424221281180       rmsd current=  0.66711766981629395     
+  ftrial(1) before go to 1:  0.38499277838281198     
+  Comparison of Ab versus previous Abtrial (=?):
+
+
+  Iteration            3
+  Error (max diff between predicted & observed):  0.80159526831367156     
+  Sum of squares:   13.294449226361246       RMSD =  0.51564424221281180     
+  Sup norm of the gradient:   326.42691131486669     
+  Number of iterations up to now:           3
+  nabs =          50  maxrow =          50
+  Maximal diagonal of aat:   38036.527702113584     
+  For augmentation z=   0.0000000000000000       Matrix aat is posdef
+  Sup norm of the increment s:  0.34192108969213253     
+  The increment has been computed but we want to know
+  whether the objective function decreased
+  rmsd trial =  0.41096616355390492       rmsd current=  0.51564424221281180     
+  ftrial(1) before go to 1:  0.22605589914942037     
+  Comparison of Ab versus previous Abtrial (=?):
+
+
+  Iteration            4
+  Error (max diff between predicted & observed):  0.78159290481975607     
+  Sum of squares:   8.4446593793107461       RMSD =  0.41096616355390492     
+  Sup norm of the gradient:   305.18093186706983     
+  Number of iterations up to now:           4
+  nabs =          50  maxrow =          50
+  Maximal diagonal of aat:   33759.231126616956     
+  For augmentation z=   0.0000000000000000       Matrix aat is posdef
+  Sup norm of the increment s:  0.20018116777654299     
+  The increment has been computed but we want to know
+  whether the objective function decreased
+  rmsd trial =  0.52413860716775051       rmsd current=  0.41096616355390492     
+  rmsd trial was bigger than rmsd current
+  New regularization:  0.10000000000000001     
+  The increment has been computed but we want to know
+  whether the objective function decreased
+  rmsd trial =  0.48557019564519377       rmsd current=  0.41096616355390492     
+  rmsd trial was bigger than rmsd current
+  New regularization:   1.0000000000000000     
+  The increment has been computed but we want to know
+  whether the objective function decreased
+  rmsd trial =  0.30656621057278038       rmsd current=  0.41096616355390492     
+  ftrial(1) before go to 1:   9.9074818892614491E-002
+  Comparison of Ab versus previous Abtrial (=?):
+
+
+  Iteration            5
+  Error (max diff between predicted & observed):  0.53629567368176057     
+  Sum of squares:   4.6991420732477165       RMSD =  0.30656621057278038     
+  Sup norm of the gradient:   262.97472914792195     
+  Number of iterations up to now:           5
+  nabs =          50  maxrow =          50
+  Maximal diagonal of aat:   30095.017584093537     
+  For augmentation z=   0.0000000000000000       Matrix aat is posdef
+  Sup norm of the increment s:  0.23233370231268563     
+  The increment has been computed but we want to know
+  whether the objective function decreased
+  rmsd trial =  0.36794883954533936       rmsd current=  0.30656621057278038     
+  rmsd trial was bigger than rmsd current
+  New regularization:  0.10000000000000001     
+  The increment has been computed but we want to know
+  whether the objective function decreased
+  rmsd trial =  0.33978350085258174       rmsd current=  0.30656621057278038     
+  rmsd trial was bigger than rmsd current
+  New regularization:   1.0000000000000000     
+  The increment has been computed but we want to know
+  whether the objective function decreased
+  rmsd trial =  0.25007836038031378       rmsd current=  0.30656621057278038     
+  ftrial(1) before go to 1:  0.18952170532430479     
+  Comparison of Ab versus previous Abtrial (=?):
+
+
+  Iteration            6
+  Error (max diff between predicted & observed):  0.53901060965714720     
+  Sum of squares:   3.1269593165253045       RMSD =  0.25007836038031378     
+  Sup norm of the gradient:   182.34599180199473     
+  Number of iterations up to now:           6
+  nabs =          50  maxrow =          50
+  Maximal diagonal of aat:   33610.064290355920     
+  For augmentation z=   0.0000000000000000       Matrix aat is posdef
+  Sup norm of the increment s:  0.38519187959235540     
+  The increment has been computed but we want to know
+  whether the objective function decreased
+  rmsd trial =  0.25999006480761855       rmsd current=  0.25007836038031378     
+  rmsd trial was bigger than rmsd current
+  New regularization:  0.10000000000000001     
+  The increment has been computed but we want to know
+  whether the objective function decreased
+  rmsd trial =  0.20304159531942614       rmsd current=  0.25007836038031378     
+  ftrial(1) before go to 1:  0.37862590749580116     
+  Comparison of Ab versus previous Abtrial (=?):
+
+
+  Iteration            7
+  Error (max diff between predicted & observed):  0.38895644423476483     
+  Sum of squares:   2.0612944714928809       RMSD =  0.20304159531942614     
+  Sup norm of the gradient:   75.853681908733208     
+  Number of iterations up to now:           7
+  nabs =          50  maxrow =          50
+  Maximal diagonal of aat:   30134.357960724530     
+  For augmentation z=   0.0000000000000000       Matrix aat is posdef
+  Sup norm of the increment s:  0.15067250918388850     
+  The increment has been computed but we want to know
+  whether the objective function decreased
+  rmsd trial =   6.9871109774781615E-002  rmsd current=  0.20304159531942614     
+  ftrial(1) before go to 1:   9.6384248364396186E-003
+  Comparison of Ab versus previous Abtrial (=?):
+
+
+  Iteration            8
+  Error (max diff between predicted & observed):  0.18059896932846531     
+  Sum of squares:  0.24409859905797912       RMSD =   6.9871109774781615E-002
+  Sup norm of the gradient:   9.3402515860470015     
+  Number of iterations up to now:           8
+  nabs =          50  maxrow =          50
+  Maximal diagonal of aat:   30698.359014730115     
+  For augmentation z=   0.0000000000000000       Matrix aat is posdef
+  Sup norm of the increment s:   5.8990575681288800E-002
+  The increment has been computed but we want to know
+  whether the objective function decreased
+  rmsd trial =   3.9696629050543851E-002  rmsd current=   6.9871109774781615E-002
+  ftrial(1) before go to 1:   3.5660659815528462E-002
+  Comparison of Ab versus previous Abtrial (=?):
+
+
+  Iteration            9
+  Error (max diff between predicted & observed):  0.12415664848361097     
+  Sum of squares:   7.8791117898824092E-002  RMSD =   3.9696629050543851E-002
+  Sup norm of the gradient:   54.317217697155975     
+  Number of iterations up to now:           9
+  nabs =          50  maxrow =          50
+  Maximal diagonal of aat:   29399.661612754557     
+  For augmentation z=   0.0000000000000000       Matrix aat is posdef
+  Sup norm of the increment s:   1.5238515868973620E-002
+  The increment has been computed but we want to know
+  whether the objective function decreased
+  rmsd trial =   8.2294908731806848E-003  rmsd current=   3.9696629050543851E-002
+  ftrial(1) before go to 1:   9.6187382133194888E-004
+  Comparison of Ab versus previous Abtrial (=?):
+
+
+  Iteration           10
+  Error (max diff between predicted & observed):   3.9044080408310755E-002
+  Sum of squares:   3.3862260015882092E-003  RMSD =   8.2294908731806848E-003
+  Sup norm of the gradient:   1.3819061563822703     
+  Number of iterations up to now:          10
+  nabs =          50  maxrow =          50
+  Maximal diagonal of aat:   29337.632400730858     
+  For augmentation z=   0.0000000000000000       Matrix aat is posdef
+  Sup norm of the increment s:   2.7579222318302623E-003
+  The increment has been computed but we want to know
+  whether the objective function decreased
+  rmsd trial =   2.0151822831582749E-003  rmsd current=   8.2294908731806848E-003
+  ftrial(1) before go to 1:   2.0192538626062628E-005
+  Comparison of Ab versus previous Abtrial (=?):
+
+
+  Iteration           11
+  Error (max diff between predicted & observed):   1.3486160975288985E-002
+  Sum of squares:   2.0304798171774991E-004  RMSD =   2.0151822831582749E-003
+  Sup norm of the gradient:  0.96515978001001168     
+  Number of iterations up to now:          11
+  nabs =          50  maxrow =          50
+  Maximal diagonal of aat:   29523.733363161020     
+  For augmentation z=   0.0000000000000000       Matrix aat is posdef
+  Sup norm of the increment s:   6.5211833122787665E-004
+  The increment has been computed but we want to know
+  whether the objective function decreased
+  rmsd trial =   3.0632067586492241E-004  rmsd current=   2.0151822831582749E-003
+  ftrial(1) before go to 1:   1.5547946050631367E-005
+  Comparison of Ab versus previous Abtrial (=?):
+
+
+  Iteration           12
+  Error (max diff between predicted & observed):   2.1506942603695123E-003
+  Sum of squares:   4.6916178231171430E-006  RMSD =   3.0632067586492241E-004
+  Sup norm of the gradient:  0.11496420069116445     
+  Number of iterations up to now:          12
+  nabs =          50  maxrow =          50
+  Maximal diagonal of aat:   29520.762736664783     
+  For augmentation z=   0.0000000000000000       Matrix aat is posdef
+  Sup norm of the increment s:   1.3891582490063348E-004
+  The increment has been computed but we want to know
+  whether the objective function decreased
+  rmsd trial =   2.1090642145826247E-007  rmsd current=   3.0632067586492241E-004
+  ftrial(1) before go to 1:   6.4589159798345008E-008
+  Comparison of Ab versus previous Abtrial (=?):
+
+
+  Iteration           13
+  Error (max diff between predicted & observed):   6.0630725418064912E-007
+  Sum of squares:   2.2240759306165120E-012  RMSD =   2.1090642145826247E-007
+  Sup norm of the gradient:   6.2938628886820210E-005
+  Number of iterations up to now:          13
+
+ ************************************
+  Return by small RMSD residual error, kon=          13
+  CPU-time=  0.159445003    
+  Number of iterations performed:          13
+  Number of backtrackings:           7
+  Average observed y"s:   3.3097307625782184       100 rmsd/ave:   6.3723135380948725E-006
+  Recall that:
+  nx =           10  nobs =          100
+  depth =           10
+  Number of function psi:           3
+  Total number of coefficients (A, b) :         829
+  Components of level           1   (Rows of A number           1 ):           9
+  Components of level           2   (Rows of A number           2 ):           9
+  Components of level           3   (Rows of A number           3 ):           9
+  Components of level           4   (Rows of A number           4 ):           9
