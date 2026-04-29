@@ -32,7 +32,7 @@
     Open(Unit = 100, File = trim(pwd)//"/../data/andreani.txt", ACCESS = "SEQUENTIAL")
 
     ! Set parameters
-    read(100,*) samples
+    read(100,*) samples 
 
     n = 5
 
@@ -554,8 +554,7 @@
         end if
 
         jcvar(1:n) = (/(i, i = 1, n)/)
-        jcval(1:n) = (/grad(ind,1:n-1) + sigma * (x(1:n-1) - xk(1:n-1)),-1.0d0/)
-        ! jcval(1:n) = (/(grad(ind,i) + sigma * (x(i) - xk(i)), i = 1, n-1), -1.0d0/)
+        jcval(1:n) = (/grad(ind,1:n-1) + sigma * (x(1:n-1) - xk(1:n-1)), -1.0d0/)
 
     end subroutine myevaljac
 
