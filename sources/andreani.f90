@@ -18,7 +18,7 @@
     ! LOCAL ARRAYS
     character(len=80) :: specfnm,outputfnm,vparam(10) 
     logical :: coded(11)
-    real(kind=8),   pointer :: l(:),u(:),x(:),xk(:),grad(:,:)
+    real(kind=8),   pointer :: l(:),u(:),x(:),xk(:),grad(:,:),hess(:,:,:)
 
     logical,        pointer :: equatn(:),linear(:)
     real(kind=8),   pointer :: lambda(:)
@@ -225,7 +225,7 @@
         do
             iter = iter + 1
     
-            allocate(equatn(m),linear(m),lambda(m),grad(m,n-1),stat=allocerr)
+            allocate(equatn(m),linear(m),lambda(m),grad(m,n-1),hess(m,n-1,n-1),stat=allocerr)
     
             if ( allocerr .ne. 0 ) then
                 write(*,*) 'Allocation error in main program'
@@ -322,7 +322,7 @@
 
             endif
 
-            deallocate(lambda,equatn,linear,grad)
+            deallocate(lambda,equatn,linear,grad,hess)
             fxk = fxtrial
             xk(1:n-1) = xtrial(1:n-1)
 
