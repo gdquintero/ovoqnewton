@@ -74,8 +74,8 @@
     outputfnm = ''
     specfnm   = ''
 
-    nvparam   = 0
-    ! vparam(1) = 'ITERATIONS-OUTPUT-DETAIL 0' 
+    nvparam   = 1
+    vparam(1) = 'ITERATIONS-OUTPUT-DETAIL 0'
 
     l(1:n-1) = -10.0d0; l(n) = -1.0d+20
     u(1:n-1) = 10.0d0; u(n) = 0.0d0
