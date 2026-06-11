@@ -1,19 +1,23 @@
 rm -f salida.txt param.txt
 touch salida.txt param.txt
 
-export ALGENCAN=/opt/algencan-3.1.1
+export ALGENCAN=~/algencan-3.1.1
 rm -f andreani
 gfortran -O3 -w -fcheck=all -g andreani.f90 -L$ALGENCAN/lib -lalgencan -lhsl sort.o subset.o -o andreani
 
 delta=1.0d-3
 sigmin=1.0d-1
 gamma=5.d0
+noutliers=0
+echo $delta $sigmin $gamma $noutliers  > param.txt
+./andreani
 
-for ((noutliers=0; noutliers<=12; noutliers+=1))
-  do
-    echo $delta $sigmin $gamma $noutliers  > param.txt
-    ./andreani >> salida.txt
-  done
+
+# for ((noutliers=0; noutliers<=0; noutliers+=1))
+#   do
+#     echo $delta $sigmin $gamma $noutliers  > param.txt
+#     ./andreani >> salida.txt
+#   done
 
 # for delta in 0.1 0.01 0.001 0.0001
 # do
