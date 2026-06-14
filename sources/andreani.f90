@@ -182,7 +182,7 @@
         integer,        intent(inout) :: outliers(noutliers),iterations,n_eval
 
         integer, parameter  :: max_iter = 10000, max_iter_sub = 100, kflag = 2
-        integer             :: iter,iter_sub,i,j
+        integer             :: iter,iter_sub,i,j,k
         real(kind=8)        :: gaux,terminate,alpha,epsilon
 
         alpha   = 1.0d-8
@@ -246,8 +246,14 @@
                 grad(i,2) = ti
                 grad(i,3) = ti**2
                 grad(i,4) = ti**3
-    
                 grad(i,:) = gaux * grad(i,:)
+
+                hess(i,1,:) = (/ti**0,ti**1,ti**2,ti**3/)
+                hess(i,2,:) = (/ti**1,ti**2,ti**3,ti**4/)
+                hess(i,3,:) = (/ti**2,ti**3,ti**4,ti**5/)
+                hess(i,4,:) = (/ti**3,ti**4,ti**5,ti**6/)
+
+
             end do
             
             sigma = sigmin
