@@ -133,8 +133,7 @@
     xk(:) = xinit(:)
 
     seed = 123456.0d0
-    ! ntrials = 100
-    ntrials = 1
+    ntrials = 100
     fovo_best = huge(1.0d0)
     inf = -5.0d0
     sup = 5.0d0
@@ -286,7 +285,8 @@
                 ! Copy the Hessian, since DSYEV overwrites the input matrix with the eigenvectors
                 pdata%Bkj(:,:) = hess(i,:,:)
 
-                
+                ! Compute eigenvalues of the Hessian via DSYEV (Bkj holds the matrix on entry,
+                ! and is overwritten with the eigenvectors on exit)
                 call dsyev(pdata%JOBZ,pdata%UPLO,n-1,pdata%Bkj,pdata%LDA,&
                 pdata%eig_hess,pdata%WORK,pdata%LWORK,pdata%INFO)
 
@@ -304,12 +304,6 @@
                 hess(i,:,:) = hess(i,:,:) + pdata%identity(:,:)
 
             end do
-
-            
-
-            
-            exit
-
             
             sigma = sigmin
             ! if (iter .eq. 1) then
@@ -580,9 +574,10 @@
         ! Compute ind-th constraint
         flag = 0
 
-        c = dot_product(x(1:n-1) - xk(1:n-1),grad(ind,1:n-1)) + &
-        (sigma * 0.5d0) * dot_product(x(1:n-1) - xk(1:n-1),x(1:n-1) - xk(1:n-1)) - x(n)
-
+        c = dot_product(x(1:n-1) - xk(1:n-1),grad(ind,1:n-1)) + 0.5d0 * &
+            (dot_product(x(1:n-1) - xk(1:n-1),matmul(hess(ind,1:n-1,1:n-1),x(1:n-1) - xk(1:n-1))) + &
+            sigma * dot_product(x(1:n-1) - xk(1:n-1),x(1:n-1) - xk(1:n-1))) - x(n)
+        
     end subroutine myevalc
 
     !******************************************************************************
@@ -615,7 +610,9 @@
         end if
 
         jcvar(1:n) = (/(i, i = 1, n)/)
-        jcval(1:n) = (/grad(ind,1:n-1) + sigma * (x(1:n-1) - xk(1:n-1)), -1.0d0/)
+        jcval(1:n) = (/grad(ind,1:n-1) + & 
+                    matmul(hess(ind,1:n-1,1:n-1),x(1:n-1) - xk(1:n-1)) + &
+                    sigma * (x(1:n-1) - xk(1:n-1)), -1.0d0/)
 
     end subroutine myevaljac
 
@@ -636,19 +633,32 @@
         real(kind=8), intent(in) :: x(n)
         real(kind=8), intent(out) :: hcval(lim)
 
+        ! LOCAL SCALARS
+        integer :: i,j
+
         flag = 0
         lmem = .false.
     
-        hcnnz = n - 1
-    
-        if ( hcnnz .gt. lim ) then
-            lmem = .true.
-            return
-        end if
-    
-        hcrow(1:n-1) = (/(i, i = 1, n-1)/)
-        hccol(1:n-1) = (/(i, i = 1, n-1)/)
-        hcval(1:n-1) = sigma
+        hcnnz = 0
+        do j = 1, n-1
+            do i = j, n-1
+                hcnnz = hcnnz + 1
+
+                if ( hcnnz .gt. lim ) then
+                    lmem = .true.
+                    return
+                end if
+
+                hcrow(hcnnz) = i
+                hccol(hcnnz) = j
+
+                if ( i .eq. j ) then
+                    hcval(hcnnz) = hess(ind,i,j) + sigma
+                else
+                    hcval(hcnnz) = hess(ind,i,j)
+                end if
+            end do
+        end do
 
     end subroutine myevalhc
 
