@@ -18,7 +18,9 @@ sigmin=1.0d-1
 gamma=5.d0
 noutliers=0
 echo $delta $sigmin $gamma $noutliers > param.txt
+# ./andreani >> salida.txt
 ./andreani
+
 
 
 # for ((noutliers=0; noutliers<=0; noutliers+=1))
@@ -44,3 +46,6 @@ echo $delta $sigmin $gamma $noutliers > param.txt
 #     done
 #   done
 # done
+
+
+echo End of execution of andreani.f90.

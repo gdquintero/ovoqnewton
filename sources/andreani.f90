@@ -23,6 +23,10 @@
     logical,        pointer :: equatn(:),linear(:)
     real(kind=8),   pointer :: lambda(:)
 
+    character(len=1) :: JOBZ,UPLO ! lapack variables
+    integer :: LDA,LWORK,INFO,NRHS,LDB ! lapack variables
+    real(kind=8), allocatable :: WORK(:),IPIV(:) ! lapack variables
+
     integer :: i
 
     character(len=128) :: pwd
@@ -35,6 +39,14 @@
     read(100,*) samples 
 
     n = 5
+
+    ! Lapack variables
+    JOBZ = 'N'
+    UPLO = 'U'
+    LDA = n
+    LDB = n
+    LWORK = 3*n - 1
+    NRHS = 1
 
     allocate(t(samples),y(samples),x(n),xk(n-1),xbest(n-1),xtrial(n-1),l(n),u(n),xinit(n-1),data(2,samples),faux(samples),&
     indices(samples),Idelta(samples),nu_l(n-1),nu_u(n-1),opt_cond(n-1),stat=allocerr)
@@ -49,6 +61,13 @@
     enddo
 
     close(100)
+
+    allocate(WORK(LWORK),IPIV(n),stat=allocerr)
+
+    if ( allocerr .ne. 0 ) then
+        write(*,*) 'Allocation error in main program'
+        stop
+    end if
 
     ! Coded subroutines
     coded(1:6)  = .true.  ! evalf, evalg, evalh, evalc, evaljac, evalhc
@@ -108,7 +127,8 @@
     xk(:) = xinit(:)
 
     seed = 123456.0d0
-    ntrials = 100
+    ! ntrials = 100
+    ntrials = 1
     fovo_best = huge(1.0d0)
     inf = -5.0d0
     sup = 5.0d0

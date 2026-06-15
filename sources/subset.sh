@@ -6,4 +6,4 @@ if [ $? -ne 0 ]; then
   exit
 fi
 #
-echo "Normal end of execution."
+echo "Normal end of execution of subset.f90."
