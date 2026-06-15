@@ -11,7 +11,7 @@ bash sort.sh   || exit 1
 bash subset.sh || exit 1
 
 # Enlazar el principal
-gfortran -O3 -w -fcheck=all -g andreani.f90 -L$ALGENCAN/lib -lalgencan -lhsl sort.o subset.o -o andreani
+gfortran -O3 -w -fcheck=all -g andreani.f90 -L$ALGENCAN/lib -lalgencan -lhsl sort.o subset.o -llapack -o andreani
 
 delta=1.0d-3
 sigmin=1.0d-1

@@ -2,6 +2,14 @@
     use sort
 
     implicit none 
+
+    ! Structure created for the construction of the Bkj matrices
+    type :: pdata_type
+        real(kind=8), allocatable :: Bkj(:,:),identity(:,:),eig_hess(:)
+        character(len=1) :: JOBZ,UPLO ! lapack variables
+        integer :: LDA,LWORK,INFO,NRHS,LDB ! lapack variables
+        real(kind=8), allocatable :: WORK(:),IPIV(:) ! lapack variables
+    end type pdata_type
     
     integer :: allocerr,samples,noutliers,q,iterations,n_eval,ntrials,itrial
     real(kind=8) :: fxk,fxtrial,ti,sigma,seed,fovo_best,inf,sup,time_best,tiempo
@@ -23,9 +31,7 @@
     logical,        pointer :: equatn(:),linear(:)
     real(kind=8),   pointer :: lambda(:)
 
-    character(len=1) :: JOBZ,UPLO ! lapack variables
-    integer :: LDA,LWORK,INFO,NRHS,LDB ! lapack variables
-    real(kind=8), allocatable :: WORK(:),IPIV(:) ! lapack variables
+    type(pdata_type), target :: pdata
 
     integer :: i
 
@@ -40,13 +46,13 @@
 
     n = 5
 
-    ! Lapack variables
-    JOBZ = 'N'
-    UPLO = 'U'
-    LDA = n
-    LDB = n
-    LWORK = 3*n - 1
-    NRHS = 1
+    ! lapack variables
+    pdata%JOBZ = 'N'
+    pdata%UPLO = 'U'
+    pdata%LDA = n-1
+    pdata%LDB = n-1
+    pdata%LWORK = 3*(n-1) - 1
+    pdata%NRHS = 1
 
     allocate(t(samples),y(samples),x(n),xk(n-1),xbest(n-1),xtrial(n-1),l(n),u(n),xinit(n-1),data(2,samples),faux(samples),&
     indices(samples),Idelta(samples),nu_l(n-1),nu_u(n-1),opt_cond(n-1),stat=allocerr)
@@ -62,7 +68,7 @@
 
     close(100)
 
-    allocate(WORK(LWORK),IPIV(n),stat=allocerr)
+    allocate(pdata%WORK(pdata%LWORK),pdata%IPIV(n-1),pdata%Bkj(n-1,n-1),pdata%eig_hess(n-1),pdata%identity(n-1,n-1),stat=allocerr)
 
     if ( allocerr .ne. 0 ) then
         write(*,*) 'Allocation error in main program'
@@ -141,7 +147,7 @@
         enddo
 
         call cpu_time(start)
-        call ovo_algorithm(q,noutliers,t,y,indices,Idelta,samples,m,n,xtrial,&
+        call ovo_algorithm(pdata,q,noutliers,t,y,indices,Idelta,samples,m,n,xtrial,&
         delta,sigmin,gamma,outliers,.true.,fovo,iterations,n_eval)
         call cpu_time(finish)
         tiempo = finish - start
@@ -190,7 +196,7 @@
     !==============================================================================
     ! MAIN ALGORITHM
     !==============================================================================
-    subroutine ovo_algorithm(q,noutliers,t,y,indices,Idelta,samples,m,n,xtrial, &
+    subroutine ovo_algorithm(pdata,q,noutliers,t,y,indices,Idelta,samples,m,n,xtrial, &
                              delta,sigmin,gamma,outliers,print_iter,fovo,iterations,n_eval)
         implicit none
 
@@ -201,9 +207,11 @@
         real(kind=8),   intent(inout) :: indices(samples),xtrial(n-1),fovo
         integer,        intent(inout) :: outliers(noutliers),iterations,n_eval
 
+        type(pdata_type), intent(inout) :: pdata
+
         integer, parameter  :: max_iter = 10000, max_iter_sub = 100, kflag = 2
-        integer             :: iter,iter_sub,i,j,k
-        real(kind=8)        :: gaux,terminate,alpha,epsilon
+        integer             :: iter,iter_sub,i,j
+        real(kind=8)        :: gaux,terminate,alpha,epsilon,lambda_min,aux_iden
 
         alpha   = 1.0d-8
         epsilon = 1.0d-3
@@ -261,6 +269,7 @@
 
                 call model(xk,Idelta(i),n,t,samples,gaux)
 
+                ! Gradient computation
                 gaux = gaux - y(Idelta(i))
                 grad(i,1) = 1.0d0
                 grad(i,2) = ti
@@ -268,13 +277,39 @@
                 grad(i,4) = ti**3
                 grad(i,:) = gaux * grad(i,:)
 
+                ! Hessian computation
                 hess(i,1,:) = (/ti**0,ti**1,ti**2,ti**3/)
                 hess(i,2,:) = (/ti**1,ti**2,ti**3,ti**4/)
                 hess(i,3,:) = (/ti**2,ti**3,ti**4,ti**5/)
                 hess(i,4,:) = (/ti**3,ti**4,ti**5,ti**6/)
 
+                ! Copy the Hessian, since DSYEV overwrites the input matrix with the eigenvectors
+                pdata%Bkj(:,:) = hess(i,:,:)
+
+                
+                call dsyev(pdata%JOBZ,pdata%UPLO,n-1,pdata%Bkj,pdata%LDA,&
+                pdata%eig_hess,pdata%WORK,pdata%LWORK,pdata%INFO)
+
+                ! Smallest eigenvalue of the Hessian
+                lambda_min = minval(pdata%eig_hess)
+
+                ! Shift needed to make the Hessian positive definite (zero if already PD);
+                ! the 1.d-8 margin keeps it strictly positive
+                aux_iden =  max(0.d0,-lambda_min + 1.d-8)
+
+                ! Build a diagonal matrix with the shift on the diagonal
+                call dlaset('A',n-1,n-1,0.0d0,aux_iden,pdata%identity,n-1)
+
+                ! Add the shift to the Hessian: H <- H + aux_iden * I (regularization)
+                hess(i,:,:) = hess(i,:,:) + pdata%identity(:,:)
 
             end do
+
+            
+
+            
+            exit
+
             
             sigma = sigmin
             ! if (iter .eq. 1) then
