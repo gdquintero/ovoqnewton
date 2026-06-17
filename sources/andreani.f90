@@ -26,7 +26,7 @@
     ! LOCAL ARRAYS
     character(len=80) :: specfnm,outputfnm,vparam(10) 
     logical :: coded(11)
-    real(kind=8),   pointer :: l(:),u(:),x(:),xk(:),grad(:,:),hess(:,:,:)
+    real(kind=8),   pointer :: l(:),u(:),x(:),xk(:),grad(:,:),hess(:,:,:) 
 
     logical,        pointer :: equatn(:),linear(:)
     real(kind=8),   pointer :: lambda(:)
