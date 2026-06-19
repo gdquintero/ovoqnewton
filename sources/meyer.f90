@@ -44,7 +44,7 @@
     ! Set parameters
     read(100,*) samples 
 
-    n = 5
+    n = 3
 
     allocate(cauchy)
     cauchy = .true.
