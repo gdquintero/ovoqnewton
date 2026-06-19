@@ -1,6 +1,6 @@
 ---
 triple:          'arm64-apple-darwin'
-binary-path:     andreani
+binary-path:     meyer
 relocations:
   - { offset: 0x19, size: 0x8, addend: 0x0, symName: _emutls_destroy, symObjAddr: 0x0, symBinAddr: 0x1000008E0, symSize: 0x60 }
   - { offset: 0x228, size: 0x8, addend: 0x0, symName: _emutls_mutex, symObjAddr: 0x300, symBinAddr: 0x1000D0010, symSize: 0x0 }
@@ -13,32 +13,32 @@ relocations:
   - { offset: 0x4DF, size: 0x8, addend: 0x0, symName: _emutls_init, symObjAddr: 0x60, symBinAddr: 0x100000940, symSize: 0x2C }
   - { offset: 0x506, size: 0x8, addend: 0x0, symName: _emutls_destroy, symObjAddr: 0x0, symBinAddr: 0x1000008E0, symSize: 0x60 }
   - { offset: 0x654, size: 0x8, addend: 0x0, symName: _get_trampolines_per_page, symObjAddr: 0x0, symBinAddr: 0x100000BE0, symSize: 0x28 }
-  - { offset: 0x6E8, size: 0x8, addend: 0x0, symName: _aarch64_trampoline_insns, symObjAddr: 0x288, symBinAddr: 0x1000A69A8, symSize: 0x0 }
+  - { offset: 0x6E8, size: 0x8, addend: 0x0, symName: _aarch64_trampoline_insns, symObjAddr: 0x288, symBinAddr: 0x1000A6348, symSize: 0x0 }
   - { offset: 0x778, size: 0x8, addend: 0x0, symName: ___gcc_nested_func_ptr_deleted, symObjAddr: 0x1E4, symBinAddr: 0x100000DC4, symSize: 0x98 }
   - { offset: 0x7CD, size: 0x8, addend: 0x0, symName: ___gcc_nested_func_ptr_created, symObjAddr: 0xE4, symBinAddr: 0x100000CC4, symSize: 0x100 }
   - { offset: 0x862, size: 0x8, addend: 0x0, symName: _allocate_tramp_ctrl, symObjAddr: 0x60, symBinAddr: 0x100000C40, symSize: 0x84 }
   - { offset: 0x8F7, size: 0x8, addend: 0x0, symName: _get_trampolines_per_page, symObjAddr: 0x0, symBinAddr: 0x100000BE0, symSize: 0x28 }
   - { offset: 0x90E, size: 0x8, addend: 0x0, symName: _allocate_trampoline_page, symObjAddr: 0x28, symBinAddr: 0x100000C08, symSize: 0x38 }
-  - { offset: 0xB1B, size: 0x8, addend: 0x0, symName: _MAIN__, symObjAddr: 0x4EC4, symBinAddr: 0x100005D24, symSize: 0x1C78 }
+  - { offset: 0xB1B, size: 0x8, addend: 0x0, symName: _MAIN__, symObjAddr: 0x4EA0, symBinAddr: 0x100005D00, symSize: 0x1624 }
   - { offset: 0xDFB, size: 0x8, addend: 0x0, symName: _myevalhc.5, symObjAddr: 0x0, symBinAddr: 0x100000E60, symSize: 0x428 }
   - { offset: 0xF05, size: 0x8, addend: 0x0, symName: _myevaljac.6, symObjAddr: 0xC40, symBinAddr: 0x100001AA0, symSize: 0x768 }
   - { offset: 0x105B, size: 0x8, addend: 0x0, symName: _myevalc.7, symObjAddr: 0x6E0, symBinAddr: 0x100001540, symSize: 0x560 }
   - { offset: 0x11CE, size: 0x8, addend: 0x0, symName: _myevalg.9, symObjAddr: 0x428, symBinAddr: 0x100001288, symSize: 0xDC }
-  - { offset: 0x127B, size: 0x8, addend: 0x0, symName: _model.11, symObjAddr: 0x13A8, symBinAddr: 0x100002208, symSize: 0x144 }
-  - { offset: 0x1384, size: 0x8, addend: 0x0, symName: _mount_idelta.13, symObjAddr: 0x504, symBinAddr: 0x100001364, symSize: 0x1DC }
-  - { offset: 0x1AC5, size: 0x8, addend: 0x0, symName: _pdata.45, symObjAddr: 0x19A80, symBinAddr: 0x1000D1130, symSize: 0x0 }
-  - { offset: 0x1C16, size: 0x8, addend: 0x0, symName: _main, symObjAddr: 0x9880, symBinAddr: 0x1000A6620, symSize: 0x2C }
-  - { offset: 0x2200, size: 0x8, addend: 0x0, symName: _myevalhlp.0, symObjAddr: 0x14EC, symBinAddr: 0x10000234C, symSize: 0x3C }
-  - { offset: 0x22E2, size: 0x8, addend: 0x0, symName: _myevalhl.1, symObjAddr: 0x1528, symBinAddr: 0x100002388, symSize: 0x3C }
-  - { offset: 0x23FA, size: 0x8, addend: 0x0, symName: _myevalgjacp.2, symObjAddr: 0x1564, symBinAddr: 0x1000023C4, symSize: 0x84 }
-  - { offset: 0x24D6, size: 0x8, addend: 0x0, symName: _myevalgjac.3, symObjAddr: 0x15E8, symBinAddr: 0x100002448, symSize: 0x3C }
-  - { offset: 0x25CA, size: 0x8, addend: 0x0, symName: _myevalfc.4, symObjAddr: 0x1624, symBinAddr: 0x100002484, symSize: 0x3C }
-  - { offset: 0x2660, size: 0x8, addend: 0x0, symName: _myevalh.8, symObjAddr: 0x1660, symBinAddr: 0x1000024C0, symSize: 0x40 }
-  - { offset: 0x2730, size: 0x8, addend: 0x0, symName: _myevalf.10, symObjAddr: 0x16A0, symBinAddr: 0x100002500, symSize: 0x80 }
-  - { offset: 0x27C0, size: 0x8, addend: 0x0, symName: _ovo_algorithm.15.constprop.0, symObjAddr: 0x1720, symBinAddr: 0x100002580, symSize: 0x37A4 }
-  - { offset: 0x2941, size: 0x8, addend: 0x0, symName: _pdata.45, symObjAddr: 0x19A80, symBinAddr: 0x1000D1130, symSize: 0x0 }
-  - { offset: 0x2AE4, size: 0x8, addend: 0x0, symName: ___clear_cache, symObjAddr: 0x0, symBinAddr: 0x1000A6560, symSize: 0x8 }
-  - { offset: 0x2BA9, size: 0x8, addend: 0x0, symName: ___clear_cache, symObjAddr: 0x0, symBinAddr: 0x1000A6560, symSize: 0x8 }
-  - { offset: 0x2C0C, size: 0x8, addend: 0x0, symName: ___powidf2, symObjAddr: 0x0, symBinAddr: 0x1000A6580, symSize: 0x84 }
-  - { offset: 0x2CD3, size: 0x8, addend: 0x0, symName: ___powidf2, symObjAddr: 0x0, symBinAddr: 0x1000A6580, symSize: 0x84 }
+  - { offset: 0x1353, size: 0x8, addend: 0x0, symName: _mount_idelta.13, symObjAddr: 0x504, symBinAddr: 0x100001364, symSize: 0x1DC }
+  - { offset: 0x19E5, size: 0x8, addend: 0x0, symName: _pdata.39, symObjAddr: 0x17A50, symBinAddr: 0x1000D1130, symSize: 0x0 }
+  - { offset: 0x1AC6, size: 0x8, addend: 0x0, symName: _main, symObjAddr: 0x8CC0, symBinAddr: 0x1000A5FC0, symSize: 0x2C }
+  - { offset: 0x20BB, size: 0x8, addend: 0x0, symName: _myevalhlp.0, symObjAddr: 0x13A8, symBinAddr: 0x100002208, symSize: 0x3C }
+  - { offset: 0x219D, size: 0x8, addend: 0x0, symName: _myevalhl.1, symObjAddr: 0x13E4, symBinAddr: 0x100002244, symSize: 0x3C }
+  - { offset: 0x22B5, size: 0x8, addend: 0x0, symName: _myevalgjacp.2, symObjAddr: 0x1420, symBinAddr: 0x100002280, symSize: 0x84 }
+  - { offset: 0x2391, size: 0x8, addend: 0x0, symName: _myevalgjac.3, symObjAddr: 0x14A4, symBinAddr: 0x100002304, symSize: 0x3C }
+  - { offset: 0x2485, size: 0x8, addend: 0x0, symName: _myevalfc.4, symObjAddr: 0x14E0, symBinAddr: 0x100002340, symSize: 0x40 }
+  - { offset: 0x251B, size: 0x8, addend: 0x0, symName: _myevalh.8, symObjAddr: 0x1520, symBinAddr: 0x100002380, symSize: 0x40 }
+  - { offset: 0x25EB, size: 0x8, addend: 0x0, symName: _myevalf.10, symObjAddr: 0x1560, symBinAddr: 0x1000023C0, symSize: 0x80 }
+  - { offset: 0x267B, size: 0x8, addend: 0x0, symName: _fi.12, symObjAddr: 0x15E0, symBinAddr: 0x100002440, symSize: 0x180 }
+  - { offset: 0x27D3, size: 0x8, addend: 0x0, symName: _ovo_algorithm.15.constprop.0, symObjAddr: 0x1760, symBinAddr: 0x1000025C0, symSize: 0x3740 }
+  - { offset: 0x295D, size: 0x8, addend: 0x0, symName: _pdata.39, symObjAddr: 0x17A50, symBinAddr: 0x1000D1130, symSize: 0x0 }
+  - { offset: 0x29C9, size: 0x8, addend: 0x0, symName: ___clear_cache, symObjAddr: 0x0, symBinAddr: 0x1000A5F00, symSize: 0x8 }
+  - { offset: 0x2A8E, size: 0x8, addend: 0x0, symName: ___clear_cache, symObjAddr: 0x0, symBinAddr: 0x1000A5F00, symSize: 0x8 }
+  - { offset: 0x2AF1, size: 0x8, addend: 0x0, symName: ___powidf2, symObjAddr: 0x0, symBinAddr: 0x1000A5F20, symSize: 0x84 }
+  - { offset: 0x2BB8, size: 0x8, addend: 0x0, symName: ___powidf2, symObjAddr: 0x0, symBinAddr: 0x1000A5F20, symSize: 0x84 }
 ...

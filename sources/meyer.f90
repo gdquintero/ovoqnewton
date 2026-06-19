@@ -145,10 +145,10 @@
     ! print*, "Solucion", xk
 
 
-    Open(Unit = 98, File = trim(pwd)//"/../output/solution_andreani.txt", ACCESS = "SEQUENTIAL")
+    Open(Unit = 98, File = trim(pwd)//"/../output/solution_meyer.txt", ACCESS = "SEQUENTIAL")
     write(98,"(11F7.3)") xk(1),xk(2),xk(3)
 
-    Open(Unit = 99, File = trim(pwd)//"/../output/outliers_andreani.txt", ACCESS = "SEQUENTIAL")
+    Open(Unit = 99, File = trim(pwd)//"/../output/outliers_meyer.txt", ACCESS = "SEQUENTIAL")
     write(99,"(I2)") noutliers
 
     do i = 1, noutliers
