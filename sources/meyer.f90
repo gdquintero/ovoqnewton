@@ -44,7 +44,7 @@
     ! Set parameters
     read(100,*) samples 
 
-    n = 3
+    n = 4
 
     allocate(cauchy)
     cauchy = .true.
@@ -105,8 +105,8 @@
     nvparam   = 1
     vparam(1) = 'ITERATIONS-OUTPUT-DETAIL 0'
 
-    l(1:n-1) = -10.0d0; l(n) = -1.0d+20
-    u(1:n-1) = 10.0d0; u(n) = 0.0d0
+    l(1:n) = -1.0d+20
+    u(1:n-1) = 1.0d+20; u(n) = 0.0d0
 
     ! Number of days
     t(:) = data(1,:)
@@ -125,52 +125,18 @@
         stop
     end if
 
-    ! xinit(:) = (/0.0d0,2.0d0,-3.0d0,1.0d0/)
-    ! xinit(:) = (/-1.0d0,-2.0d0,1.0d0,-1.0d0/)
-    xinit(:) = (/6.4602d0,2.7072d0,-7.5418d0,2.1604d0/)
-    ! xinit = 1.d0
+    ! Least squares
+    xinit(:) = (/0.005610d0,6181.346433d0,345.223638d0/)
       
     outliers(:) = 0
 
     xk(:) = xinit(:)
 
-    seed = 123456.0d0
-    ntrials = 100
-    fovo_best = huge(1.0d0)
-    inf = -5.0d0
-    sup = 5.0d0
-
-    do itrial = 1,ntrials
-        xk(:) = xinit(:)
-
-        do i = 1, n-1
-            xk(i) = xk(i) + (2.0d0 * drand(seed) - 1.0d0) * 5.0d-1 * max(1.0d0,abs(xk(i)))
-        enddo
-
-        call cpu_time(start)
-        call ovo_algorithm(pdata,q,noutliers,t,y,indices,Idelta,samples,m,n,xtrial,&
-        delta,sigmin,gamma,outliers,.true.,fovo,iterations,n_eval)
-        call cpu_time(finish)
-        tiempo = finish - start
-
-        if (ntrials .ge. 1) then
-            write(*,*) "En la ejecucion ",itrial," el valor de fovo fue ",fovo
-
-            if (fovo .lt. fovo_best) then
-                time_best = tiempo
-                write(*,*) "Encontro una fovo mejor!"
-                fovo_best = fovo
-                xbest(:) = xk(:)
-                outliers_best(:) = outliers(:)
-            endif
-        endif
-
-    enddo
-
-    xk = xbest
-    outliers = outliers_best
-    fovo = fovo_best
-    tiempo = time_best
+    call cpu_time(start)
+    call ovo_algorithm(pdata,q,noutliers,t,y,indices,Idelta,samples,m,n,xtrial,&
+    delta,sigmin,gamma,outliers,.true.,fovo,iterations,n_eval)
+    call cpu_time(finish)
+    tiempo = finish - start
 
     write(*,100) "esta", noutliers,"&",fovo,"&",iterations,"&",n_eval,"&",tiempo,"\\"
     100 format (A5,1X,I2,1X,A1,1X,ES10.3,1X,A1,1X,I3,1X,A1,1X,I4,1X,A1,1X,ES10.3,1X,A2)
@@ -180,7 +146,7 @@
 
 
     Open(Unit = 98, File = trim(pwd)//"/../output/solution_andreani.txt", ACCESS = "SEQUENTIAL")
-    write(98,"(11F7.3)") xk(1),xk(2),xk(3),xk(4)
+    write(98,"(11F7.3)") xk(1),xk(2),xk(3)
 
     Open(Unit = 99, File = trim(pwd)//"/../output/outliers_andreani.txt", ACCESS = "SEQUENTIAL")
     write(99,"(I2)") noutliers
@@ -212,7 +178,7 @@
 
         integer, parameter  :: max_iter = 10000, max_iter_sub = 100, kflag = 2
         integer             :: iter,iter_sub,i,j
-        real(kind=8)        :: gaux,terminate,alpha,epsilon,lambda_min,aux_iden,lambda_max
+        real(kind=8)        :: gaux,terminate,alpha,epsilon,lambda_min,aux_iden,lambda_max,ei,si,ri
 
         alpha   = 1.0d-8
         epsilon = 1.0d-3
@@ -268,22 +234,25 @@
 
             do i = 1, m
                 ti = t(Idelta(i))
-
-                call model(xk,Idelta(i),n,t,samples,gaux)
+                si = ti + xk(3)
+                ei = exp(xk(2) / si)
+                ri = xk(1) * ei - y(Idelta(i))
 
                 ! Gradient computation
-                gaux = gaux - y(Idelta(i))
-                grad(i,1) = 1.0d0
-                grad(i,2) = ti
-                grad(i,3) = ti**2
-                grad(i,4) = ti**3
-                grad(i,:) = gaux * grad(i,:)
+                grad(i,1) = 1.d0
+                grad(i,2) = xk(1) / si
+                grad(i,3) = (-xk(1) * xk(2)) / (si**2)
+                grad(i,:) = ei * ri * grad(i,:)
 
                 ! Hessian computation
-                hess(i,1,:) = (/ti**0,ti**1,ti**2,ti**3/)
-                hess(i,2,:) = (/ti**1,ti**2,ti**3,ti**4/)
-                hess(i,3,:) = (/ti**2,ti**3,ti**4,ti**5/)
-                hess(i,4,:) = (/ti**3,ti**4,ti**5,ti**6/)
+                hess(i,1,:) = (/ei, (xk(1) * ei + ri)/si, (-xk(2) * (xk(1) * ei + ri))/(si**2)/)
+                hess(i,2,:) = (/(xk(1) * ei + ri)/si, (xk(1) * (xk(1) * ei + ri))/(si**2), &
+                            (-xk(1) * (xk(1) * xk(2) * ei + ri * (xk(2) + si)))/(si**3)/)
+                hess(i,3,:) = (/(-xk(2) * (xk(1) * ei + ri))/(si**2), &
+                            (-xk(1) * (xk(1) * xk(2) * ei + ri * (xk(2) + si)))/(si**3), &
+                            (xk(1) * xk(2) * (xk(1) * xk(2) * ei + ri * (xk(2) + 2.0d0 * si)))/(si**4)/)
+
+                hess(i,:,:) = ei * hess(i,:,:)
 
                 ! Copy the Hessian, since DSYEV overwrites the input matrix with the eigenvectors
                 pdata%Bkj(:,:) = hess(i,:,:)
@@ -298,7 +267,7 @@
 
                 ! Shift needed to make the Hessian positive definite (zero if already PD);
                 ! the 1.d-8 margin keeps it strictly positive
-                aux_iden =  max(0.d0,-lambda_min)
+                aux_iden =  max(0.d0,-lambda_min + 1.d-8)
 
                 ! Build a diagonal matrix with the shift on the diagonal
                 call dlaset('A',n-1,n-1,0.0d0,aux_iden,pdata%identity,n-1)
@@ -501,7 +470,7 @@
         real(kind=8),   intent(in) :: x(n-1),t(samples)
         real(kind=8),   intent(out) :: res
 
-        res = x(1) + (x(2) * t(i)) + (x(3) * (t(i)**2)) + (x(4) * (t(i)**3))
+        res = x(1) * exp(x(2) / (t(i) + x(3)))
 
     end subroutine model
 
