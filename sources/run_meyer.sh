@@ -13,9 +13,9 @@ bash subset.sh || exit 1
 # Enlazar el principal
 gfortran -O3 -w -fcheck=all -g meyer.f90 -L$ALGENCAN/lib -lalgencan -lhsl sort.o subset.o -llapack -o meyer
 
-delta=1.0d-1
-sigmin=1.0d-1
-gamma=5.d0
+delta=1.0d-2
+sigmin=1.0d-2
+gamma=2.d0
 
 for ((noutliers=0; noutliers<=0; noutliers+=1))
   do
@@ -32,10 +32,10 @@ for ((noutliers=0; noutliers<=0; noutliers+=1))
 #       echo 'esta=============================' >> salida.txt
 #       echo 'esta=====',$delta $sigmin $gamma  >> salida.txt
 #       echo 'esta=============================' >> salida.txt
-#       for noutliers in {0..12}
+#       for noutliers in {0..0}
 #       do
 #         echo $delta $sigmin $gamma $noutliers > param.txt
-#         ./andreani >> salida.txt
+#         ./meyer >> salida.txt
 #       done
 #     done
 #   done

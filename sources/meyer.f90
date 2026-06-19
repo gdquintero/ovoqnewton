@@ -178,10 +178,10 @@
 
         integer, parameter  :: max_iter = 10000, max_iter_sub = 100, kflag = 2
         integer             :: iter,iter_sub,i,j
-        real(kind=8)        :: gaux,terminate,alpha,epsilon,lambda_min,aux_iden,lambda_max,ei,si,ri
+        real(kind=8)        :: terminate,alpha,epsilon,lambda_min,aux_iden,lambda_max,ei,si,ri
 
         alpha   = 1.0d-8
-        epsilon = 1.0d-3
+        epsilon = 1.0d-2
         iter    = 0 
         pdata%M = 1
         
