@@ -5,7 +5,7 @@
 
     ! Structure created for the construction of the Bkj matrices
     type :: pdata_type
-        real(kind=8), allocatable :: Bkj(:,:),identity(:,:),eig_hess(:)
+        real(kind=8), allocatable :: Bkj(:,:),identity(:,:),eig_hess(:),M
         character(len=1) :: JOBZ,UPLO ! lapack variables
         integer :: LDA,LWORK,INFO,NRHS,LDB ! lapack variables
         real(kind=8), allocatable :: WORK(:),IPIV(:) ! lapack variables
@@ -210,11 +210,12 @@
 
         integer, parameter  :: max_iter = 10000, max_iter_sub = 100, kflag = 2
         integer             :: iter,iter_sub,i,j
-        real(kind=8)        :: gaux,terminate,alpha,epsilon,lambda_min,aux_iden
+        real(kind=8)        :: gaux,terminate,alpha,epsilon,lambda_min,aux_iden,lambda_max
 
         alpha   = 1.0d-8
         epsilon = 1.0d-3
         iter    = 0 
+        pdata%M = 1
         
         indices(:) = (/(i, i = 1, samples)/)
     
@@ -295,13 +296,25 @@
 
                 ! Shift needed to make the Hessian positive definite (zero if already PD);
                 ! the 1.d-8 margin keeps it strictly positive
-                aux_iden =  max(0.d0,-lambda_min + 1.d-8)
+                aux_iden =  max(0.d0,-lambda_min)
 
                 ! Build a diagonal matrix with the shift on the diagonal
                 call dlaset('A',n-1,n-1,0.0d0,aux_iden,pdata%identity,n-1)
 
                 ! Add the shift to the Hessian: H <- H + aux_iden * I (regularization)
                 hess(i,:,:) = hess(i,:,:) + pdata%identity(:,:)
+
+                ! Add the shift to the Hessian: H ← H + aux_iden * I (regularization)
+                hess(i,:,:) = hess(i,:,:) + pdata%identity(:,:)
+
+                ! Largest eigenvalue of the (already PSD-shifted) curvature matrix
+                lambda_max = maxval(pdata%eig_hess) + aux_iden
+
+                ! Enforce ||B_{k,j}|| <= M
+                if (lambda_max > pdata%M) then
+                    hess(i,:,:) = (pdata%M / lambda_max) * hess(i,:,:)
+                end if
+
 
             end do
             
