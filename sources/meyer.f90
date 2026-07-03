@@ -369,6 +369,8 @@
             fxk = fxtrial
             xk(1:n-1) = xtrial(1:n-1)
 
+            print*, "AQUIIIII: ",xk
+
             if (terminate .lt. epsilon) exit
             if (iter .ge. max_iter) exit
     
