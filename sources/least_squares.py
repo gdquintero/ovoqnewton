@@ -11,17 +11,14 @@ parent = os.path.abspath(os.path.join(cwd, os.pardir))
 
 # Problem name is passed as a command-line argument, e.g.:
 #   python least_squares.py bard
-#   python least_squares.py meyer
 if len(sys.argv) < 2:
-    sys.exit("Usage: python least_squares.py <problem>   (e.g. bard, meyer, andreani)")
+    sys.exit("Usage: python least_squares.py <problem>   (e.g. bard, andreani)")
 
 problem = sys.argv[1]
 
 # Standard starting points per problem (default: all ones).
 init_points = {
-    "meyer":    np.array([0.02, 4000.0, 250.0]),
     "bard":     np.array([1.0, 1.0, 1.0]),
-    "osborne":  np.array([0.5, 1.5, -1.0, 0.01, 0.02]),
     "andreani": np.array([1.0, 1.0, 1.0, 1.0]),
 }
 
