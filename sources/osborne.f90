@@ -109,8 +109,10 @@
     ! Box constraints for Osborne 1. Keep the decay rates x4,x5 >= 0 so the
     ! exponentials stay bounded (t reaches 320), and fix the signs x2>0, x3<0 to
     ! remove the (x2,x4)<->(x3,x5) swap symmetry of the two-exponential model.
-    l(1) = 0.0d0;  l(2) = 0.0d0;  l(3) = -3.0d0; l(4) = 0.0d0;  l(5) = 0.0d0; l(n) = -1.0d+20
-    u(1) = 2.0d0;  u(2) = 3.0d0;  u(3) = 0.0d0;  u(4) = 0.5d0;  u(5) = 0.5d0; u(n) = 0.0d0
+    ! The box is wide enough to contain the (degenerate) contaminated LS fit,
+    ! which serves as the multistart base point (see xinit below).
+    l(1) = 0.0d0;  l(2) = 0.0d0;  l(3) = -60.0d0; l(4) = 0.0d0;  l(5) = 0.0d0; l(n) = -1.0d+20
+    u(1) = 2.0d0;  u(2) = 60.0d0; u(3) = 0.0d0;   u(4) = 0.5d0;  u(5) = 0.5d0; u(n) = 0.0d0
 
     ! Abscissas (t(i) = i) and observations
     t(:) = data(1,:)
@@ -130,8 +132,12 @@
         stop
     end if
 
-    ! Standard MGH starting point x0 = (0.5, 1.5, -1, 0.01, 0.02).
-    xinit(:) = (/0.5d0, 1.5d0, -1.0d0, 0.01d0, 0.02d0/)
+    ! Multistart base point = least-squares fit to the CONTAMINATED data
+    ! (output/sol_ls_osborne.txt, from least_squares.py). The four outliers pull
+    ! this naive fit into a near-degenerate region (x2,x3 large and opposite,
+    ! x4~x5, the two exponentials nearly merged), just as in the polynomial
+    ! experiment the base is the contaminated LS fit.
+    xinit(:) = (/0.299810d0, 51.732266d0, -51.182683d0, 0.013687d0, 0.013949d0/)
 
     outliers(:) = 0
 

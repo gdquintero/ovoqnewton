@@ -13,7 +13,7 @@ bash subset.sh || exit 1
 # Enlazar el principal
 gfortran -O3 -w -fcheck=all -g osborne.f90 -L$ALGENCAN/lib -lalgencan -lhsl sort.o subset.o -llapack -o osborne
 
-delta=1.0d-2
+delta=1.0d-4
 sigmin=1.0d-1
 gamma=5.d0
 
