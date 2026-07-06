@@ -11,7 +11,7 @@
         real(kind=8), allocatable :: WORK(:),IPIV(:) ! lapack variables
     end type pdata_type
     
-    integer :: allocerr,samples,noutliers,q,iterations,n_eval,ntrials,itrial,iter_best,neval_best,cauchy_flag
+    integer :: allocerr,samples,noutliers,q,iterations,n_eval,ntrials,itrial,cauchy_flag,iter_best,neval_best
     real(kind=8) :: fxk,fxtrial,ti,sigma,seed,fovo_best,inf,sup,time_best,tiempo
     real(kind=8), allocatable :: xtrial(:),faux(:),indices(:),nu_l(:),nu_u(:),opt_cond(:),&
                                  xinit(:),y(:),data(:,:),t(:),xbest(:)
@@ -41,12 +41,12 @@
     call get_environment_variable('PWD',pwd)
 
     ! Reading data and storing it in the variables t and y
-    Open(Unit = 100, File = trim(pwd)//"/../data/andreani.txt", ACCESS = "SEQUENTIAL")
+    Open(Unit = 100, File = trim(pwd)//"/../data/osborne.txt", ACCESS = "SEQUENTIAL")
 
     ! Set parameters
-    read(100,*) samples 
+    read(100,*) samples
 
-    n = 5
+    n = 6
 
     allocate(cauchy)
 
@@ -106,10 +106,13 @@
     nvparam   = 1
     vparam(1) = 'ITERATIONS-OUTPUT-DETAIL 0'
 
-    l(1:n-1) = -10.0d0; l(n) = -1.0d+20
-    u(1:n-1) = 10.0d0; u(n) = 0.0d0
+    ! Box constraints for Osborne 1. Keep the decay rates x4,x5 >= 0 so the
+    ! exponentials stay bounded (t reaches 320), and fix the signs x2>0, x3<0 to
+    ! remove the (x2,x4)<->(x3,x5) swap symmetry of the two-exponential model.
+    l(1) = 0.0d0;  l(2) = 0.0d0;  l(3) = -3.0d0; l(4) = 0.0d0;  l(5) = 0.0d0; l(n) = -1.0d+20
+    u(1) = 2.0d0;  u(2) = 3.0d0;  u(3) = 0.0d0;  u(4) = 0.5d0;  u(5) = 0.5d0; u(n) = 0.0d0
 
-    ! Number of days
+    ! Abscissas (t(i) = i) and observations
     t(:) = data(1,:)
     y(:) = data(2,:)
 
@@ -127,20 +130,16 @@
         stop
     end if
 
-    ! xinit(:) = (/0.0d0,2.0d0,-3.0d0,1.0d0/)
-    ! xinit(:) = (/-1.0d0,-2.0d0,1.0d0,-1.0d0/)
-    xinit(:) = (/6.4602d0,2.7072d0,-7.5418d0,2.1604d0/)
-    ! xinit = 1.d0
-      
+    ! Standard MGH starting point x0 = (0.5, 1.5, -1, 0.01, 0.02).
+    xinit(:) = (/0.5d0, 1.5d0, -1.0d0, 0.01d0, 0.02d0/)
+
     outliers(:) = 0
 
-    xk(:) = xinit(:)
-
+    ! Multistart: perturb the starting point and keep the best (smallest fovo),
+    ! since the OVO problem has many non-global local minimizers.
     seed = 123456.0d0
     ntrials = 100
     fovo_best = huge(1.0d0)
-    inf = -5.0d0
-    sup = 5.0d0
     iter_sum = 0.0d0; iter_sq = 0.0d0
     neval_sum = 0.0d0; neval_sq = 0.0d0
 
@@ -148,7 +147,18 @@
         xk(:) = xinit(:)
 
         do i = 1, n-1
-            xk(i) = xk(i) + (2.0d0 * drand(seed) - 1.0d0) * 5.0d-1 * max(1.0d0,abs(xk(i)))
+            ! Relative perturbation x0_i + r*|x0_i|, r ~ U[-0.5,0.5] (as in the poly
+            ! experiment). A relative scale is essential here: the decay rates
+            ! x4,x5 (~0.01-0.02) are two orders below x1,x2,x3, so an absolute
+            ! perturbation would never seed the basin of the good fit.
+            xk(i) = xk(i) + (2.0d0 * drand(seed) - 1.0d0) * 5.0d-1 * abs(xk(i))
+        enddo
+
+        ! Project the perturbed start onto the box before the first residual
+        ! evaluation: the tiny decay rates x4,x5 (~0.01) get large relative
+        ! perturbations, and a negative x4 or x5 would overflow exp(-t*x) (t<=320).
+        do i = 1, n-1
+            xk(i) = max(l(i), min(u(i), xk(i)))
         enddo
 
         call cpu_time(start)
@@ -157,6 +167,7 @@
         call cpu_time(finish)
         tiempo = finish - start
 
+        ! Accumulate iteration / evaluation counts over all trials (mean and std)
         iter_sum  = iter_sum  + dble(iterations)
         iter_sq   = iter_sq   + dble(iterations)**2
         neval_sum = neval_sum + dble(n_eval)
@@ -172,7 +183,6 @@
             iter_best = iterations
             neval_best = n_eval
         endif
-
     enddo
 
     xk = xbest
@@ -182,11 +192,13 @@
     iterations = iter_best
     n_eval = neval_best
 
+    ! Mean and standard deviation of #it and #fcnt over the multistart trials
     iter_mean  = iter_sum / dble(ntrials)
     neval_mean = neval_sum / dble(ntrials)
     iter_std   = sqrt(max(0.0d0, iter_sq /dble(ntrials) - iter_mean**2))
     neval_std  = sqrt(max(0.0d0, neval_sq/dble(ntrials) - neval_mean**2))
 
+    ! Median over the multistart trials (robust to the heavy tail)
     call DSORT(iter_arr, dummy_arr, ntrials, 1)
     call DSORT(neval_arr, dummy_arr, ntrials, 1)
     if (mod(ntrials,2) .eq. 0) then
@@ -210,10 +222,10 @@
     ! print*, "Solucion", xk
 
 
-    Open(Unit = 98, File = trim(pwd)//"/../output/solution_andreani.txt", ACCESS = "SEQUENTIAL")
-    write(98,"(11F7.3)") xk(1),xk(2),xk(3),xk(4)
+    Open(Unit = 98, File = trim(pwd)//"/../output/solution_osborne.txt", ACCESS = "SEQUENTIAL")
+    write(98,"(5F16.6)") xk(1),xk(2),xk(3),xk(4),xk(5)
 
-    Open(Unit = 99, File = trim(pwd)//"/../output/outliers_andreani.txt", ACCESS = "SEQUENTIAL")
+    Open(Unit = 99, File = trim(pwd)//"/../output/outliers_osborne.txt", ACCESS = "SEQUENTIAL")
     write(99,"(I2)") noutliers
 
     do i = 1, noutliers
@@ -243,7 +255,7 @@
 
         integer, parameter  :: max_iter = 10000, max_iter_sub = 100, kflag = 2
         integer             :: iter,iter_sub,i,j
-        real(kind=8)        :: gaux,terminate,alpha,epsilon,lambda_min,aux_iden,lambda_max
+        real(kind=8)        :: terminate,alpha,epsilon,lambda_min,aux_iden,lambda_max,e4,e5,ri
 
         alpha   = 1.0d-8
         epsilon = 1.0d-4
@@ -298,23 +310,46 @@
             lambda(:) = 0.0d0
 
             do i = 1, m
-                ti = t(Idelta(i))
+                ti = t(Idelta(i))                 ! abscissa t_i = 10*(i-1)
+                e4 = exp(-ti * xk(4))
+                e5 = exp(-ti * xk(5))
+                ri = xk(1) + xk(2)*e4 + xk(3)*e5 - y(Idelta(i))   ! residual r = model - y
 
-                call model(xk,Idelta(i),n,t,samples,gaux)
+                ! Gradient of f_i = 0.5*r^2, grad_r = (1, e4, e5, -t*x2*e4, -t*x3*e5)
+                grad(i,1) = ri
+                grad(i,2) = ri * e4
+                grad(i,3) = ri * e5
+                grad(i,4) = ri * (-ti * xk(2) * e4)
+                grad(i,5) = ri * (-ti * xk(3) * e5)
 
-                ! Gradient computation
-                gaux = gaux - y(Idelta(i))
-                grad(i,1) = 1.0d0
-                grad(i,2) = ti
-                grad(i,3) = ti**2
-                grad(i,4) = ti**3
-                grad(i,:) = gaux * grad(i,:)
-
-                ! Hessian computation
-                hess(i,1,:) = (/ti**0,ti**1,ti**2,ti**3/)
-                hess(i,2,:) = (/ti**1,ti**2,ti**3,ti**4/)
-                hess(i,3,:) = (/ti**2,ti**3,ti**4,ti**5/)
-                hess(i,4,:) = (/ti**3,ti**4,ti**5,ti**6/)
+                ! Hessian of f_i = grad_r*grad_r^T + r*Hess_g (Hess_g has only the
+                ! (2,4),(3,5),(4,4),(5,5) second derivatives of the model nonzero)
+                hess(i,1,1) = 1.0d0
+                hess(i,1,2) = e4
+                hess(i,1,3) = e5
+                hess(i,1,4) = -ti * xk(2) * e4
+                hess(i,1,5) = -ti * xk(3) * e5
+                hess(i,2,2) = e4**2
+                hess(i,2,3) = e4 * e5
+                hess(i,2,4) = -ti * e4 * (xk(2)*e4 + ri)
+                hess(i,2,5) = -ti * xk(3) * e4 * e5
+                hess(i,3,3) = e5**2
+                hess(i,3,4) = -ti * xk(2) * e4 * e5
+                hess(i,3,5) = -ti * e5 * (xk(3)*e5 + ri)
+                hess(i,4,4) = ti**2 * xk(2) * e4 * (xk(2)*e4 + ri)
+                hess(i,4,5) = ti**2 * xk(2) * xk(3) * e4 * e5
+                hess(i,5,5) = ti**2 * xk(3) * e5 * (xk(3)*e5 + ri)
+                ! Symmetric lower triangle
+                hess(i,2,1) = hess(i,1,2)
+                hess(i,3,1) = hess(i,1,3)
+                hess(i,4,1) = hess(i,1,4)
+                hess(i,5,1) = hess(i,1,5)
+                hess(i,3,2) = hess(i,2,3)
+                hess(i,4,2) = hess(i,2,4)
+                hess(i,5,2) = hess(i,2,5)
+                hess(i,4,3) = hess(i,3,4)
+                hess(i,5,3) = hess(i,3,5)
+                hess(i,5,4) = hess(i,4,5)
 
                 ! Copy the Hessian, since DSYEV overwrites the input matrix with the eigenvectors
                 pdata%Bkj(:,:) = hess(i,:,:)
@@ -329,7 +364,7 @@
 
                 ! Shift needed to make the Hessian positive definite (zero if already PD);
                 ! the 1.d-8 margin keeps it strictly positive
-                aux_iden =  max(0.d0,-lambda_min)
+                aux_iden =  max(0.d0,-lambda_min + 1.d-8)
 
                 ! Build a diagonal matrix with the shift on the diagonal
                 call dlaset('A',n-1,n-1,0.0d0,aux_iden,pdata%identity,n-1)
@@ -526,10 +561,11 @@
         implicit none 
 
         integer,        intent(in) :: n,i,samples
-        real(kind=8),   intent(in) :: x(n-1),t(samples)
         real(kind=8),   intent(out) :: res
+        real(kind=8),   intent(in) :: x(n-1),t(samples)
 
-        res = x(1) + (x(2) * t(i)) + (x(3) * (t(i)**2)) + (x(4) * (t(i)**3))
+        ! Osborne 1 model: x1 + x2*exp(-t*x4) + x3*exp(-t*x5)
+        res = x(1) + x(2)*exp(-t(i)*x(4)) + x(3)*exp(-t(i)*x(5))
 
     end subroutine model
 

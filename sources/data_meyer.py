@@ -17,6 +17,11 @@ y = np.array([
      8261.0,  7030.0,  6005.0,  5147.0,  4427.0,  3820.0,  3307.0, 2872.0
 ])
 
+# Inject 4 outliers by corrupting the observations at indices 4, 8, 12, 16
+# (1-based) with a multiplicative factor of 0.5.
+outlier_idx = np.array([4, 8, 12, 16]) - 1   # 0-based
+y[outlier_idx] = 0.5 * y[outlier_idx]
+
 with open(parent+"/data/meyer.txt","w") as f:
     f.write("%i\n" % m)
     for i in range(m):

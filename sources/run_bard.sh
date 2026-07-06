@@ -4,31 +4,31 @@ touch salida.txt salida2.txt param.txt
 
 export ALGENCAN=$HOME/algencan-3.1.1
 
-rm -f meyer *.mod *.o
+rm -f bard *.mod *.o
 
 # Compilar dependencias con el gfortran de ESTA máquina
 bash sort.sh   || exit 1
 bash subset.sh || exit 1
 
 # Enlazar el principal
-gfortran -O3 -w -fcheck=all -g meyer.f90 -L$ALGENCAN/lib -lalgencan -lhsl sort.o subset.o -llapack -o meyer
+gfortran -O3 -w -fcheck=all -g bard.f90 -L$ALGENCAN/lib -lalgencan -lhsl sort.o subset.o -llapack -o bard
 
-delta=1.0d-2
-sigmin=1.0d-2
-gamma=2.d0
+delta=1.0d-1
+sigmin=1.0d-1
+gamma=5.d0
 
 echo "=== Primer orden (B=0, cauchy_flag=1) ===" >> salida.txt
 for ((noutliers=0; noutliers<=6; noutliers+=1))
   do
     echo $delta $sigmin $gamma $noutliers 1 > param.txt
-    ./meyer >> salida.txt
+    ./bard >> salida.txt
   done
 
 echo "=== Quasi-Newton (M=1, cauchy_flag=0) ===" >> salida2.txt
 for ((noutliers=0; noutliers<=6; noutliers+=1))
   do
     echo $delta $sigmin $gamma $noutliers 0 > param.txt
-    ./meyer >> salida2.txt
+    ./bard >> salida2.txt
   done
 
-echo End of execution of meyer.f90.
+echo End of execution of bard.f90.

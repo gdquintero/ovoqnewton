@@ -1,0 +1,70 @@
+% ======================================================================
+% Updates for Section 4.1 (polynomial / Andreani)
+% Regenerated with the definitive parameters: delta=0.1, sigmin=0.1,
+% gamma=5, eps=1e-4, M=1, best-trial metric.
+% ======================================================================
+
+% -----------------------------------------------------------------
+% (A) Updated Table 1 (Andreani), best-trial counts
+% -----------------------------------------------------------------
+\begin{table}[t]
+  \centering
+  \begin{tabular}{c rrr rrr}
+    \toprule
+      & \multicolumn{3}{c}{First-order ($B=0$)}
+      & \multicolumn{3}{c}{Quasi-Newton ($M=1$)} \\
+    \cmidrule(lr){2-4}\cmidrule(lr){5-7}
+    $o$ & $f(x^\star)$ & \#it & \#fcnt & $f(x^\star)$ & \#it & \#fcnt \\
+    \midrule
+     0 & 1.363e$+$01 & 20 & 120 & 1.362e$+$01 & 45 & 205 \\
+     1 & 1.145e$+$01 & 45 & 238 & 1.145e$+$01 & 20 &  77 \\
+     2 & 1.004e$+$01 & 22 & 114 & 1.005e$+$01 & 17 &  84 \\
+     3 & 9.535e$+$00 & 40 & 182 & 9.530e$+$00 & 15 &  84 \\
+     4 & 9.013e$+$00 & 64 & 341 & 9.014e$+$00 & 33 & 170 \\
+     5 & 8.455e$+$00 & 38 & 170 & 8.460e$+$00 & 32 & 158 \\
+     6 & 7.436e$+$00 & 38 & 199 & 7.434e$+$00 & 40 & 193 \\
+     7 & 6.921e$+$00 & 31 & 151 & 6.907e$+$00 & 19 &  89 \\
+     8 & 5.503e$+$00 & 39 & 158 & 5.501e$+$00 & 32 & 139 \\
+     9 & 4.176e$+$00 & 33 & 150 & 4.190e$+$00 & 55 & 282 \\
+    10 & 3.120e$-$02 & 29 & 170 & 4.077e$-$02 & 35 & 182 \\
+    11 & 3.452e$-$02 & 27 & 137 & 2.275e$-$02 & 21 &  89 \\
+    12 & 3.228e$-$02 & 23 & 142 & 3.421e$-$02 & 22 & 116 \\
+    \midrule
+    $\Sigma$ & & 449 & 2272 & & 386 & 1868 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Third-degree polynomial ($m=46$, $\delta=0.1$): first-order method
+  ($B=0$) versus the quasi-Newton variant ($M=1$). For each $o$, the best
+  $f(x^\star)$ over $100$ starting points, the number of outer iterations
+  (\#it) and the number of function evaluations (\#fcnt) of the run attaining
+  it.}
+  \label{tab:poly}
+\end{table}
+
+% -----------------------------------------------------------------
+% (B) Replacement for the aggregate sentence in Section 4.1
+%     OLD: "...in aggregate the first-order method uses 480 iterations and
+%     2324 evaluations, the quasi-Newton variant 485 and 2389, the per-instance
+%     differences have no systematic sign and cancel out..."
+%     Use the wording that matches the metric you finally adopt (see NOTE).
+% -----------------------------------------------------------------
+% Both methods identify the ten outliers through the sharp drop of $f(x^\star)$
+% between $o=9$ and $o=10$, and return solutions of the same quality. Their
+% iteration and evaluation counts are of the same order---in aggregate $449$
+% iterations and $2272$ evaluations for the first-order method against $386$
+% and $1868$ for the quasi-Newton variant---but these are the counts of the
+% single run that produced each reported solution and are subject to the
+% run-to-run variability of the multistart procedure. On this affine model the
+% Gauss--Newton curvature coincides with the exact, constant Hessian and the
+% explicit curvature term is redundant, so the aggregate difference cannot be
+% ascribed to $B$ and merely reflects that variability.
+
+% -----------------------------------------------------------------
+% (C) Replacement for the CLOSING sentence of Section 4.1
+%     OLD: "The picture changes for models that are genuinely nonlinear in the
+%     parameters, considered next, where the first-order model is a poorer
+%     local approximation and the curvature becomes informative."
+% -----------------------------------------------------------------
+% We turn next to a model that is genuinely nonlinear in the parameters, where
+% the first-order model is a poorer local approximation, to examine whether the
+% additional curvature translates into a practical advantage.

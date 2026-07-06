@@ -11,12 +11,13 @@
         real(kind=8), allocatable :: WORK(:),IPIV(:) ! lapack variables
     end type pdata_type
     
-    integer :: allocerr,samples,noutliers,q,iterations,n_eval,ntrials,itrial
+    integer :: allocerr,samples,noutliers,q,iterations,n_eval,ntrials,itrial,cauchy_flag
     real(kind=8) :: fxk,fxtrial,ti,sigma,seed,fovo_best,inf,sup,time_best,tiempo
     real(kind=8), allocatable :: xtrial(:),faux(:),indices(:),nu_l(:),nu_u(:),opt_cond(:),&
                                  xinit(:),y(:),data(:,:),t(:),xbest(:)
     integer, allocatable :: Idelta(:),outliers(:),outliers_best(:)
     real(kind=8) :: fovo,delta,sigmin,gamma,start,finish
+    real(kind=8) :: D(3)  ! diagonal scaling: physical x_j = D(j) * u_j (internal)
     
     ! LOCAL SCALARS
     logical :: checkder
@@ -39,15 +40,19 @@
     call get_environment_variable('PWD',pwd)
 
     ! Reading data and storing it in the variables t and y
-    Open(Unit = 100, File = trim(pwd)//"/../data/andreani.txt", ACCESS = "SEQUENTIAL")
+    Open(Unit = 100, File = trim(pwd)//"/../data/meyer.txt", ACCESS = "SEQUENTIAL")
 
     ! Set parameters
     read(100,*) samples 
 
     n = 4
 
+    ! Diagonal scaling of the Meyer parameters so that the derivatives w.r.t.
+    ! each variable are of comparable magnitude (fixes the ill-conditioning).
+    ! Internal (optimization) variables u relate to physical x by x_j = D(j)*u_j.
+    D = (/1.0d-3, 1.0d3, 1.0d2/)
+
     allocate(cauchy)
-    cauchy = .true.
 
     ! lapack variables
     pdata%JOBZ = 'N'
@@ -113,8 +118,9 @@
     y(:) = data(2,:)
 
     Open(Unit = 100, file = 'param.txt')
-    read(100,*) delta,sigmin,gamma,noutliers
+    read(100,*) delta,sigmin,gamma,noutliers,cauchy_flag
     close(100)
+    cauchy = (cauchy_flag .eq. 1)
 
     q = samples - noutliers
 
@@ -125,12 +131,13 @@
         stop
     end if
 
-    ! Least squares
-    xinit(:) = (/0.005610d0,6181.346433d0,345.223638d0/)
-      
+    ! Least squares fit to the contaminated data (physical units), from least_squares.py
+    xinit(:) = (/34.386986d0,903.135595d0,80.278742d0/)
+
     outliers(:) = 0
 
-    xk(:) = xinit(:)
+    ! Work in scaled space: u = x / D
+    xk(:) = xinit(:) / D(:)
 
     call cpu_time(start)
     call ovo_algorithm(pdata,q,noutliers,t,y,indices,Idelta,samples,m,n,xtrial,&
@@ -146,7 +153,7 @@
 
 
     Open(Unit = 98, File = trim(pwd)//"/../output/solution_meyer.txt", ACCESS = "SEQUENTIAL")
-    write(98,"(11F7.3)") xk(1),xk(2),xk(3)
+    write(98,"(3F16.6)") D(1)*xk(1),D(2)*xk(2),D(3)*xk(3)
 
     Open(Unit = 99, File = trim(pwd)//"/../output/outliers_meyer.txt", ACCESS = "SEQUENTIAL")
     write(99,"(I2)") noutliers
@@ -177,8 +184,8 @@
         type(pdata_type), intent(inout) :: pdata
 
         integer, parameter  :: max_iter = 10000, max_iter_sub = 100, kflag = 2
-        integer             :: iter,iter_sub,i,j
-        real(kind=8)        :: terminate,alpha,epsilon,lambda_min,aux_iden,lambda_max,ei,si,ri
+        integer             :: iter,iter_sub,i,j,a,b
+        real(kind=8)        :: terminate,alpha,epsilon,lambda_min,aux_iden,lambda_max,ei,si,ri,x1p,x2p,x3p
 
         alpha   = 1.0d-8
         epsilon = 1.0d-2
@@ -234,25 +241,40 @@
 
             do i = 1, m
                 ti = t(Idelta(i))
-                si = ti + xk(3)
-                ei = exp(xk(2) / si)
-                ri = xk(1) * ei - y(Idelta(i))
 
-                ! Gradient computation
+                ! Physical parameters (x = D*u); grad/hess are built in physical
+                ! units and then scaled by D (chain rule) into the u-space below.
+                x1p = D(1) * xk(1)
+                x2p = D(2) * xk(2)
+                x3p = D(3) * xk(3)
+
+                si = ti + x3p
+                ei = exp(x2p / si)
+                ri = x1p * ei - y(Idelta(i))
+
+                ! Gradient computation (physical space)
                 grad(i,1) = 1.d0
-                grad(i,2) = xk(1) / si
-                grad(i,3) = (-xk(1) * xk(2)) / (si**2)
+                grad(i,2) = x1p / si
+                grad(i,3) = (-x1p * x2p) / (si**2)
                 grad(i,:) = ei * ri * grad(i,:)
 
-                ! Hessian computation
-                hess(i,1,:) = (/ei, (xk(1) * ei + ri)/si, (-xk(2) * (xk(1) * ei + ri))/(si**2)/)
-                hess(i,2,:) = (/(xk(1) * ei + ri)/si, (xk(1) * (xk(1) * ei + ri))/(si**2), &
-                            (-xk(1) * (xk(1) * xk(2) * ei + ri * (xk(2) + si)))/(si**3)/)
-                hess(i,3,:) = (/(-xk(2) * (xk(1) * ei + ri))/(si**2), &
-                            (-xk(1) * (xk(1) * xk(2) * ei + ri * (xk(2) + si)))/(si**3), &
-                            (xk(1) * xk(2) * (xk(1) * xk(2) * ei + ri * (xk(2) + 2.0d0 * si)))/(si**4)/)
+                ! Hessian computation (physical space)
+                hess(i,1,:) = (/ei, (x1p * ei + ri)/si, (-x2p * (x1p * ei + ri))/(si**2)/)
+                hess(i,2,:) = (/(x1p * ei + ri)/si, (x1p * (x1p * ei + ri))/(si**2), &
+                            (-x1p * (x1p * x2p * ei + ri * (x2p + si)))/(si**3)/)
+                hess(i,3,:) = (/(-x2p * (x1p * ei + ri))/(si**2), &
+                            (-x1p * (x1p * x2p * ei + ri * (x2p + si)))/(si**3), &
+                            (x1p * x2p * (x1p * x2p * ei + ri * (x2p + 2.0d0 * si)))/(si**4)/)
 
                 hess(i,:,:) = ei * hess(i,:,:)
+
+                ! Scale into the u-space: grad_u = D .* grad_x, hess_u = D * hess_x * D
+                do a = 1, n-1
+                    grad(i,a) = D(a) * grad(i,a)
+                    do b = 1, n-1
+                        hess(i,a,b) = D(a) * D(b) * hess(i,a,b)
+                    end do
+                end do
 
                 ! Copy the Hessian, since DSYEV overwrites the input matrix with the eigenvectors
                 pdata%Bkj(:,:) = hess(i,:,:)
@@ -273,9 +295,6 @@
                 call dlaset('A',n-1,n-1,0.0d0,aux_iden,pdata%identity,n-1)
 
                 ! Add the shift to the Hessian: H <- H + aux_iden * I (regularization)
-                hess(i,:,:) = hess(i,:,:) + pdata%identity(:,:)
-
-                ! Add the shift to the Hessian: H ← H + aux_iden * I (regularization)
                 hess(i,:,:) = hess(i,:,:) + pdata%identity(:,:)
 
                 ! Largest eigenvalue of the (already PSD-shifted) curvature matrix
@@ -368,8 +387,6 @@
             deallocate(lambda,equatn,linear,grad,hess)
             fxk = fxtrial
             xk(1:n-1) = xtrial(1:n-1)
-
-            print*, "AQUIIIII: ",xk
 
             if (terminate .lt. epsilon) exit
             if (iter .ge. max_iter) exit
@@ -472,7 +489,8 @@
         real(kind=8),   intent(in) :: x(n-1),t(samples)
         real(kind=8),   intent(out) :: res
 
-        res = x(1) * exp(x(2) / (t(i) + x(3)))
+        ! x holds scaled variables u; physical parameters are D(j)*u_j
+        res = (D(1)*x(1)) * exp((D(2)*x(2)) / (t(i) + D(3)*x(3)))
 
     end subroutine model
 

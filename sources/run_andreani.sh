@@ -1,6 +1,6 @@
 #!/bin/bash
-rm -f salida.txt param.txt
-touch salida.txt param.txt
+rm -f salida.txt salida2.txt param.txt
+touch salida.txt salida2.txt param.txt
 
 export ALGENCAN=$HOME/algencan-3.1.1
 
@@ -17,10 +17,18 @@ delta=1.0d-1
 sigmin=1.0d-1
 gamma=5.d0
 
-for ((noutliers=0; noutliers<=0; noutliers+=1))
+echo "=== Primer orden (B=0, cauchy_flag=1) ===" >> salida.txt
+for ((noutliers=0; noutliers<=12; noutliers+=1))
   do
-    echo $delta $sigmin $gamma $noutliers  > param.txt
+    echo $delta $sigmin $gamma $noutliers 1 > param.txt
     ./andreani >> salida.txt
+  done
+
+echo "=== Quasi-Newton (M=1, cauchy_flag=0) ===" >> salida2.txt
+for ((noutliers=0; noutliers<=12; noutliers+=1))
+  do
+    echo $delta $sigmin $gamma $noutliers 0 > param.txt
+    ./andreani >> salida2.txt
   done
 
 echo End of execution of andreani.f90.
