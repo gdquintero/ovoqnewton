@@ -40,14 +40,14 @@
 
 \begin{document}
 
-\title{A Quasi-Newton-like regularized approach\\ to the order-value optimization problem\thanks{This work has been funded by the Vice-Rectorate for Research, Outreach and Social Projection of the University of the Atlantic through the 2022 Internal Call for Proposals to Strengthen Research Groups with Tools for Creation, Innovation, and Research.}}
+\title{A quasi-Newton regularized method for box-constrained order-value optimization\thanks{This work has been funded by the Vice-Rectorate for Research, Outreach and Social Projection of the University of the Atlantic through the 2022 Internal Call for Proposals to Strengthen Research Groups with Tools for Creation, Innovation, and Research.}}
 
 \author{
+    G. Q. Álvarez\thanks{Mathematics Program, Faculty of Basic Sciences, University of Atlantic, Puerto Colombia, Atlántico, Colombia. e-mail: gdquintero@uniatlantico.edu.co}
+    \and 
     Carlos Araujo\thanks{Mathematics Program, Faculty of Basic Sciences, University of Atlantic, Puerto Colombia, Atlántico, Colombia. e-mail: carlosaraujo@uniatlantico.edu.co}
     \and
-    Miguel Caro\thanks{Mathematics Program, Faculty of Basic Sciences, University of Atlantic, Puerto Colombia, Atlántico, Colombia. e-mail: miguelcaro@uniatlantico.edu.co}
-    \and
-    Gustavo Quintero\thanks{Mathematics Program, Faculty of Basic Sciences, University of Atlantic, Puerto Colombia, Atlántico, Colombia. e-mail: gdquintero@uniatlantico.edu.co}
+    M. A. C. Candezano\thanks{Mathematics Program, Faculty of Basic Sciences, University of Atlantic, Puerto Colombia, Atlántico, Colombia. e-mail: miguelcaro@uniatlantico.edu.co}
 }
 
 % \date{June 18, 2025\footnote{Revision made on \today.}}
@@ -55,26 +55,25 @@
 \maketitle
 
 \begin{abstract}
-The order-value function of order $p$ returns, at each point, the $p$th
-smallest value among a finite family of functions $f_1,\dots,f_m$;
-minimizing it recovers the minimization of the minimum and of the maximum
-of the family in the extreme cases $p=1$ and $p=m$, and provides a flexible
-tool for robust estimation, in which a prescribed number of outlying
-observations are discarded. We propose a regularized method for minimizing
-the order-value function subject to box constraints. At each iteration the
-method minimizes a strongly convex model that combines a piecewise-linear
-term built from the active gradients, a quasi-Newton curvature term defined
-by a symmetric positive semidefinite matrix, and a quadratic regularization;
-the curvature term carries second-order information without requiring explicit
-second derivatives, and a recently proposed first-order regularized method is
-recovered as the special case in which this term vanishes. We introduce an
-approximate optimality condition for the problem and prove that the method is
-well defined and attains the same worst-case iteration- and
+The order-value function of order $p$ returns, at each point, the $p$th smallest
+value among a finite family of functions $f_1,\dots,f_m$; minimizing it recovers
+the minimization of the minimum and of the maximum of the family in the extreme
+cases $p=1$ and $p=m$, and provides a flexible tool for robust estimation, in
+which a prescribed number of outlying observations are discarded. We propose a
+regularized method for minimizing the order-value function subject to box
+constraints. At each iteration the method minimizes a strongly convex model that
+combines a piecewise-linear term built from the active gradients, a quasi-Newton
+curvature term defined by a symmetric positive semidefinite matrix, and a
+quadratic regularization; the curvature term carries second-order information
+without requiring explicit second derivatives, and a purely first-order
+regularized method is recovered as the special case in which this term vanishes.
+We introduce an approximate optimality condition for the problem and prove that
+the method is well defined and attains the same worst-case iteration- and
 evaluation-complexity bounds as its first-order counterpart, so that the
-incorporation of curvature preserves the theoretical guarantees at no
-additional order of complexity. The applicability of the method to
-parameter-estimation problems with outliers is illustrated, and the practical
-effect of the curvature is examined empirically.\\
+incorporation of curvature preserves the theoretical guarantees at no additional
+order of complexity. The applicability of the method to parameter-estimation
+problems with outliers is illustrated, and the practical effect of the curvature
+is examined empirically.\\
 
 \noindent
 \textbf{Keywords:} Order-value optimization, regularized models,
@@ -116,9 +115,13 @@ The order-value optimization (OVO) problem was first formulated in
 converge to points satisfying a weak optimality condition. Sharper optimality
 conditions and a reformulation as a nonlinear program with equilibrium
 constraints were subsequently developed in \cite{dunder2}. A quasi-Newton
-method generalizing the scheme of \cite{dunder1} was introduced in
-\cite{yano1}, and a global optimization strategy combining multistart with a
-tunneling technique was proposed in \cite{salva}. On the
+method generalizing the Cauchy scheme of \cite{dunder1}---approximating the
+active components by convex quadratics and proving global and local
+convergence---was introduced in \cite{yano1}, and a global optimization
+strategy combining multistart with a tunneling technique was proposed in
+\cite{salva}. A closely related variant, in which the sum of the $p$ smallest
+values is minimized---low order-value optimization (LOVO)---was developed with
+applications to robust estimation and data analysis in \cite{yano2}. On the
 computational-complexity side, \cite{jiang} established that minimizing the
 order-value function over a polytope is NP-hard in the strong sense.
 
@@ -140,7 +143,18 @@ updated in a quasi-Newton fashion and therefore requires no explicit second
 derivatives, while the regularization renders the model strongly convex, so
 that each subproblem has a unique minimizer. Setting $B=0$ recovers the
 first-order method of \cite{alvarezovo} exactly, so the proposed method is a
-strict generalization of it. We derive an approximate optimality condition for
+strict generalization of it. Curvature had already been incorporated into OVO
+by the quasi-Newton method of \cite{yano1}, which approximates the active
+components by convex quadratics with positive semidefinite quasi-Newton
+Hessians and establishes global convergence together with local superlinear
+and quadratic rates; that method, however, controls the step through a
+trust-region bound combined with a line search, and its guarantees are
+asymptotic. Here the curvature is instead embedded in the adaptively
+regularized model of \cite{alvarezovo}: the Tikhonov term renders each
+subproblem strongly convex with a unique minimizer, and the analysis yields
+non-asymptotic worst-case iteration- and evaluation-complexity bounds rather
+than asymptotic convergence rates. We derive an approximate optimality
+condition for
 the box-constrained problem and prove that the method is well defined and
 attains the \emph{same} worst-case iteration- and evaluation-complexity bounds
 as the first-order method. Thus the incorporation of curvature does not degrade
@@ -262,8 +276,9 @@ $\Psi(\xkjtrial; x^k, B_{k,j}, \delta, \sigma_{k,j}) \leq 0$; since
 $\Psi(x^k; x^k, B_{k,j}, \delta, \sigma_{k,j}) = 0$, any descent method started
 at $x^k$ produces such iterates. Moreover, \eqref{ovo-subpro} minimizes a
 strongly convex function over the compact convex set $\Omega$, so it has a
-unique global minimizer and every stationary point is global; standard convex
-solvers apply directly.
+unique global minimizer and every stationary point is global; the
+global-minimizer requirement of Step~2 is therefore met by any such descent
+method, and standard convex solvers apply directly.
 
 \section{Optimality condition and complexity} \label{sec:complexity}
 
@@ -539,7 +554,8 @@ f_i(\xkjtrial) \leq f_i(x^k) - \alpha \|\xkjtrial - x^k\|^2, \qquad
 i \in I_\delta(x^k).
 \end{equation}
 On the other hand, by \eqref{ccotasub}, the Cauchy--Schwarz inequality, and the
-two-sided consequence of Assumption~\ref{a4},
+two-sided consequence of Assumption~\ref{a4}, using
+$\|\nabla f_i(x^k)\| \leq c_\nabla \leq c_x$ and \eqref{ccotasub},
 $|f_i(\xkjtrial) - f_i(x^k)| \leq c_x^2/\sigma_{k,j}
 + L c_x^2/(2\sigma_{k,j}^2)$ for all $i$; using $L \leq \sigma_{k,j}$, this is
 at most $3c_x^2/(2\sigma_{k,j})$, and \eqref{este} yields
@@ -673,6 +689,12 @@ $\sigma_{\min}=0.1$, $\alpha=10^{-8}$, $\gamma=5$, and $\epsilon=10^{-4}$. Both
 methods are run from identical starting points with the same random seed, so
 that any difference is attributable to $B$.
 
+The codes were implemented in Fortran 90. Tests were conducted on a computer
+with a 13th-generation Intel Core i7-13700KF processor (up to $5.4$\,GHz) and
+$32$\,GB $4800$\,MT/s DDR5 RAM,
+running Linux (Arch Linux, kernel 7.0.10). Code was compiled by the GNU Fortran
+compiler (version 16.1.1) with the \texttt{-O3} optimization directive enabled.
+
 \subsection{A model linear in the parameters} \label{subsec:poly}
 
 Following \cite{dunder1}, we fit the third-degree polynomial
@@ -686,48 +708,63 @@ $100$ starting points $x^0_i=\bar x_i+r\,|\bar x_i|$, with $r\sim U[-0.5,0.5]$
 $M=1$.
 
 Table~\ref{tab:poly} reports, for each $o$ and for both methods, the best value
-$f(x^*)$ over the $100$ starting points together with the mean number of outer
-iterations and function evaluations. Both methods identify the $10$ outliers
+$f(x^*)$ over the $100$ starting points, the iterations and evaluations of the
+single run that attained it, and the mean and median iterations and evaluations
+over all $100$ runs. Both methods identify the $10$ outliers
 through the sharp drop of $f(x^*)$ between $o=9$ and $o=10$, and return solutions
-of the same quality. Their iteration and evaluation counts are essentially
-identical---in aggregate $368$ iterations and $1836$ evaluations for the
-first-order method against $369$ and $1858$ for the quasi-Newton variant, and
-the medians agree just as closely ($350$ and $1760$ against $352$ and
-$1792$)---the per-$o$ counts differing only within the run-to-run variability of
-the multistart procedure. This is expected: on this affine model the Gauss--Newton curvature
+of the same quality. The ``best run'' counts are a single, point-initialisation
+dependent sample and are reported only to show at what cost that particular
+solution was reached; the fair cost comparison is the mean and median over all
+$100$ runs, on which the two methods are essentially identical. Summing over $o$
+the per-$o$ means reported in
+Table~\ref{tab:poly} gives $368$ iterations and $1836$ evaluations for the
+first-order method against $369$ and $1858$ for the quasi-Newton variant; the
+corresponding sums of the per-$o$ medians (the median columns of the table)
+agree just as closely, $350$ and $1760$ against $352$ and $1792$. The two methods thus
+differ only within the run-to-run variability of the multistart
+procedure. This is expected: on this affine model the Gauss--Newton curvature
 coincides with the exact, constant Hessian, so the explicit curvature term is
 redundant and $B$ has no discernible effect.
 
 \begin{table}[ht!]
 \centering
 
-\label{tab:poly}
-\begin{tabular}{c ccc ccc}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{c ccc cc cc ccc cc cc}
 \hline
- & \multicolumn{3}{c}{First-order ($B=0$)} & \multicolumn{3}{c}{Quasi-Newton ($M=1$)} \\
-$o$ & $f(x^*)$ & \#it & \#fcnt & $f(x^*)$ & \#it & \#fcnt \\
+ & \multicolumn{7}{c}{First-order ($B=0$)} & \multicolumn{7}{c}{Quasi-Newton ($M=1$)} \\
+\cline{2-8}\cline{9-15}
+ & \multicolumn{3}{c}{best run} & \multicolumn{2}{c}{\#it} & \multicolumn{2}{c}{\#fcnt}
+ & \multicolumn{3}{c}{best run} & \multicolumn{2}{c}{\#it} & \multicolumn{2}{c}{\#fcnt} \\
+\cline{2-4}\cline{5-6}\cline{7-8}\cline{9-11}\cline{12-13}\cline{14-15}
+$o$ & $f(x^*)$ & \#it & \#fcnt & mean & med & mean & med
+    & $f(x^*)$ & \#it & \#fcnt & mean & med & mean & med \\
 \hline
-0  & 1.363e+01 & 31 & 151 & 1.362e+01 & 30 & 147 \\
-1  & 1.145e+01 & 30 & 146 & 1.145e+01 & 31 & 155 \\
-2  & 1.004e+01 & 31 & 155 & 1.005e+01 & 30 & 152 \\
-3  & 9.535e+00 & 29 & 147 & 9.530e+00 & 28 & 143 \\
-4  & 9.013e+00 & 29 & 140 & 9.014e+00 & 28 & 138 \\
-5  & 8.455e+00 & 29 & 144 & 8.460e+00 & 30 & 149 \\
-6  & 7.436e+00 & 28 & 143 & 7.434e+00 & 29 & 147 \\
-7  & 6.921e+00 & 30 & 151 & 6.907e+00 & 31 & 161 \\
-8  & 5.503e+00 & 28 & 139 & 5.501e+00 & 28 & 143 \\
-9  & 4.176e+00 & 26 & 132 & 4.190e+00 & 25 & 126 \\
-10 & 3.120e-02 & 26 & 130 & 4.077e-02 & 26 & 133 \\
-11 & 3.452e-02 & 25 & 126 & 2.275e-02 & 26 & 129 \\
-12 & 3.228e-02 & 26 & 132 & 3.421e-02 & 27 & 135 \\
+0  & 1.363e+01 & 20 & 120 & 31 & 30.0 & 151 & 149.5 & 1.362e+01 & 45 & 205 & 30 & 29.5 & 147 & 143.5 \\
+1  & 1.145e+01 & 45 & 238 & 30 & 30.0 & 146 & 142.0 & 1.145e+01 & 20 &  77 & 31 & 30.0 & 155 & 152.5 \\
+2  & 1.004e+01 & 22 & 114 & 31 & 28.5 & 155 & 152.5 & 1.005e+01 & 17 &  84 & 30 & 28.5 & 152 & 150.0 \\
+3  & 9.535e+00 & 40 & 182 & 29 & 28.0 & 147 & 143.5 & 9.530e+00 & 15 &  84 & 28 & 27.0 & 143 & 137.0 \\
+4  & 9.013e+00 & 64 & 341 & 29 & 27.5 & 140 & 132.5 & 9.014e+00 & 33 & 170 & 28 & 27.0 & 138 & 132.0 \\
+5  & 8.455e+00 & 38 & 170 & 29 & 27.0 & 144 & 133.0 & 8.460e+00 & 32 & 158 & 30 & 29.0 & 149 & 143.0 \\
+6  & 7.436e+00 & 38 & 199 & 28 & 24.0 & 143 & 126.0 & 7.434e+00 & 40 & 193 & 29 & 26.5 & 147 & 135.5 \\
+7  & 6.921e+00 & 31 & 151 & 30 & 30.0 & 151 & 150.5 & 6.907e+00 & 19 &  89 & 31 & 31.0 & 161 & 155.0 \\
+8  & 5.503e+00 & 39 & 158 & 28 & 27.0 & 139 & 139.0 & 5.501e+00 & 32 & 139 & 28 & 26.0 & 143 & 140.5 \\
+9  & 4.176e+00 & 33 & 150 & 26 & 24.0 & 132 & 117.5 & 4.190e+00 & 55 & 282 & 25 & 23.5 & 126 & 119.5 \\
+10 & 3.120e-02 & 29 & 170 & 26 & 23.5 & 130 & 122.0 & 4.077e-02 & 35 & 182 & 26 & 24.0 & 133 & 123.0 \\
+11 & 3.452e-02 & 27 & 137 & 25 & 25.0 & 126 & 122.5 & 2.275e-02 & 21 &  89 & 26 & 24.5 & 129 & 124.5 \\
+12 & 3.228e-02 & 23 & 142 & 26 & 25.5 & 132 & 130.0 & 3.421e-02 & 22 & 116 & 27 & 26.0 & 135 & 136.0 \\
 \hline
-$\Sigma$ & & 368 & 1836 & & 369 & 1858 \\
+$\Sigma$ & & 449 & 2272 & 368 & 350.0 & 1836 & 1760.5 & & 386 & 1868 & 369 & 352.5 & 1858 & 1792.0 \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
 \caption{Third-degree polynomial ($m=46$, $\delta=0.1$): first-order method
-($B=0$) versus the quasi-Newton variant ($M=1$). For each $o$, the best
-$f(x^*)$ over $100$ starting points, and the mean number of outer iterations
-(\#it) and function evaluations (\#fcnt) over those starting points.}
+($B=0$) versus the quasi-Newton variant ($M=1$). For each $o$, the ``best run''
+block reports the best $f(x^*)$ over $100$ starting points together with the
+outer iterations (\#it) and function evaluations (\#fcnt) of the single run that
+attained it; the remaining columns give the mean and median \#it and \#fcnt over
+all $100$ starting points. The $\Sigma$ row sums each count over $o$.}
+\label{tab:poly}
 \end{table}
 
 The absence of any gain from curvature on this problem is expected, and
@@ -780,84 +817,82 @@ Table~\ref{tab:bard} reports the results. As the true number of outliers is
 unknown, one solves a sequence of problems with increasing $o$ and looks for a
 sharp drop in $f(x^*)$; here $f(x^*)$ decreases only moderately for $o \le 3$
 and then drops by more than two orders of magnitude between $o = 3$ and $o = 4$,
-after which it remains negligible. Both methods exhibit the same drop at $o = 4$
+after which it remains negligible (Figure~\ref{fig:bard}(b)). Both methods exhibit the same drop at $o = 4$
 and both identify exactly the four added outliers. For $o \le 3$ they return
 essentially identical values of $f(x^*)$; for $o \ge 4$, once the outliers are
 removed, both reduce $f(x^*)$ to the residual floor of the clean data, the
 first-order method reaching marginally lower values there, within the
-variability of the multistart procedure. Figure~\ref{fig:bard} shows the fit
+variability of the multistart procedure. Figure~\ref{fig:bard}(a) shows the fit
 obtained at $o = 4$: the model follows the fifteen clean observations while the
 four outliers, marked with circles, are discarded.
 
 \begin{table}[ht!]
 \centering
-\label{tab:bard}
-\begin{tabular}{c ccc ccc}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{c ccc cc cc ccc cc cc}
 \hline
- & \multicolumn{3}{c}{First-order ($B=0$)} & \multicolumn{3}{c}{Quasi-Newton ($M=1$)} \\
-$o$ & $f(x^*)$ & \#it & \#fcnt & $f(x^*)$ & \#it & \#fcnt \\
+ & \multicolumn{7}{c}{First-order ($B=0$)} & \multicolumn{7}{c}{Quasi-Newton ($M=1$)} \\
+\cline{2-8}\cline{9-15}
+ & \multicolumn{3}{c}{best run} & \multicolumn{2}{c}{\#it} & \multicolumn{2}{c}{\#fcnt}
+ & \multicolumn{3}{c}{best run} & \multicolumn{2}{c}{\#it} & \multicolumn{2}{c}{\#fcnt} \\
+\cline{2-4}\cline{5-6}\cline{7-8}\cline{9-11}\cline{12-13}\cline{14-15}
+$o$ & $f(x^*)$ & \#it & \#fcnt & mean & med & mean & med
+    & $f(x^*)$ & \#it & \#fcnt & mean & med & mean & med \\
 \hline
-0 & 2.643e+00 & 361 & 382 & 2.643e+00 & 399 & 416 \\
-1 & 1.879e+00 & 152 & 166 & 1.876e+00 &  39 &  54 \\
-2 & 6.765e-01 &  32 &  45 & 6.693e-01 &  38 &  49 \\
-3 & 3.511e-01 &  13 &  28 & 3.549e-01 &  11 &  20 \\
-4 & 2.086e-03 &  10 &  19 & 2.785e-03 &   8 &  13 \\
-5 & 6.578e-05 &  16 &  22 & 1.021e-04 &   8 &  11 \\
-6 & 6.319e-05 &   9 &  16 & 9.543e-04 &  10 &  13 \\
+0 & 2.643e+00 & 367 & 394 & 361 & 362.5 & 382 & 385.0 & 2.643e+00 & 393 & 411 & 399 & 397.5 & 416 & 414.5 \\
+1 & 1.879e+00 &   8 &  30 & 152 &  10.5 & 166 &  29.5 & 1.876e+00 &  16 &  45 &  39 &   7.0 &  54 &  22.0 \\
+2 & 6.765e-01 &   5 &  17 &  32 &   7.0 &  45 &  23.0 & 6.693e-01 &   4 &  12 &  38 &   7.0 &  49 &  18.0 \\
+3 & 3.511e-01 &   7 &  21 &  13 &   8.0 &  28 &  22.0 & 3.549e-01 &   8 &  27 &  11 &   6.0 &  20 &  15.0 \\
+4 & 2.086e-03 &   7 &  24 &  10 &   8.0 &  19 &  17.5 & 2.785e-03 &   2 &   5 &   8 &   6.0 &  13 &  11.0 \\
+5 & 6.578e-05 &   6 &  27 &  16 &   5.0 &  22 &  11.0 & 1.021e-04 &   6 &   9 &   8 &   6.0 &  11 &   8.0 \\
+6 & 6.319e-05 &  13 &  21 &   9 &   5.0 &  16 &  12.0 & 9.543e-04 &   7 &   8 &  10 &   6.0 &  13 &   9.0 \\
 \hline
-$\Sigma$ & & 593 & 678 & & 513 & 576 \\
+$\Sigma$ & & 413 & 534 & 593 & 406.0 & 678 & 500.0 & & 436 & 517 & 513 & 435.5 & 576 & 497.5 \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
 \caption{Bard function ($m=19$, $\delta=0.1$) with four added outliers,
 two above and two below the model curve: first-order method ($B=0$) versus the
-quasi-Newton variant
-($M=1$). For each $o$, the best $f(x^*)$ over $100$ starting points, and the
-mean number of outer iterations (\#it) and function evaluations (\#fcnt) over
-those starting points.}
+quasi-Newton variant ($M=1$). For each $o$, the ``best run'' block reports the
+best $f(x^*)$ over $100$ starting points together with the outer iterations
+(\#it) and function evaluations (\#fcnt) of the single run that attained it; the
+remaining columns give the mean and median \#it and \#fcnt over all $100$
+starting points. The $\Sigma$ row sums each count over $o$.}
+\label{tab:bard}
 \end{table}
 
 \begin{figure}[ht!]
 \centering
-\includegraphics{images/bard_fitting.pdf}
+\includegraphics[width=\textwidth]{bard_panels.pdf}
 \caption{Bard function with four added outliers, two above and two below the
-model curve: the fit returned at $o=4$ (solid line) follows the clean
-observations (dots), while the four points identified as outliers (circles) are
-discarded.}
+model curve. (a) The fit returned at $o=4$ (solid line) follows the fifteen
+clean observations (dots), while the four points identified as outliers
+(circles) are discarded. (b) Best $f(x^*)$ over the $100$ starting points as a
+function of the number $o$ of discarded observations (logarithmic vertical axis;
+the two variants coincide): $f(x^*)$ decreases only moderately up to $o=3$ and
+drops by more than two orders of magnitude at $o=4$, after which it stays at the
+residual floor of the clean data, the onset of which identifies the four
+outliers.}
 \label{fig:bard}
 \end{figure}
 
-\begin{table}[ht!]
-\centering
-\begin{tabular}{l cc cc}
-\hline
- & \multicolumn{2}{c}{\#it} & \multicolumn{2}{c}{\#fcnt} \\
- & $B=0$ & $M=1$ & $B=0$ & $M=1$ \\
-\hline
-mean   & 232  & 114 & 296 & 160 \\
-median & 43.5 & 38  & 115 & 83  \\
-\hline
-\end{tabular}
-\caption{Bard function, outlier-removal regime: aggregate (sum over
-$o = 1,\dots,6$) of the per-$o$ mean and median iteration and evaluation counts,
-for the first-order ($B=0$) and quasi-Newton ($M=1$) methods.}
-\label{tab:bard-agg}
-\end{table}
-
 Unlike the polynomial instance, the counts now differ between the two methods,
-and the difference has structure. The aggregate is dominated by $o = 0$---the
-minimax over all $m = 19$ observations, outliers included---a hard nonconvex
-problem where both methods are expensive (about $360$--$400$ mean iterations)
-and the first-order method is in fact slightly cheaper. Once at least the
-outliers are being discarded ($o \ge 1$), the regime for which the method is
-intended, the quasi-Newton variant is consistently more efficient.
-Table~\ref{tab:bard-agg} aggregates the two counts over $o = 1, \dots, 6$, by
-both mean and median. The mean gap is large---the first-order method uses about
-twice as many iterations and evaluations---but is amplified by a heavy tail of
-slow first-order runs on the hardest instances (at $o = 1$ the mean iteration
-count is $152$ for the first-order method against $39$ for the quasi-Newton
-variant), which the curvature mitigates. The median, robust to this tail, still
-favours the quasi-Newton variant, though more modestly. Either way, in this
-regime the curvature lowers the cost.
+and the difference has structure. The aggregate over all $o$ is dominated by
+$o = 0$---the minimax over all $m = 19$ observations, outliers included---a hard
+nonconvex problem where both methods are expensive (about $360$--$400$ mean
+iterations) and the first-order method is in fact slightly cheaper. Once at
+least the outliers are being discarded ($o \ge 1$), the regime for which the
+method is intended, the quasi-Newton variant is consistently more efficient.
+Summing the per-$o$ means of Table~\ref{tab:bard} over $o = 1, \dots, 6$ gives
+$232$ iterations and $296$ evaluations for the first-order method against $114$
+and $160$ for the quasi-Newton variant; the corresponding sums of the per-$o$
+medians are $43.5$ and $115$ against $38$ and $83$. The mean gap is large---the
+first-order method uses about twice as many iterations and evaluations---but is
+amplified by a heavy tail of slow first-order runs on the hardest instances (at
+$o = 1$ the mean iteration count is $152$ for the first-order method against
+$39$ for the quasi-Newton variant), which the curvature mitigates. The median,
+robust to this tail, still favours the quasi-Newton variant, though more
+modestly. Either way, in this regime the curvature lowers the cost.
 
 Curvature thus helps precisely where the first-order model is a poor local
 approximation---a nonlinear model with outliers still present---while it neither
@@ -927,10 +962,6 @@ and a cubically regularized subproblem.
 
 \begin{thebibliography}{99}
 
-\bibitem{abmsobso} R. Andreani, E. G. Birgin, J. M. Mart\'{\i}nez and M. L. Schuverdt, Augmented Lagrangian methods under the Constant Positive Linear Dependence constraint qualification, \textit{Mathematical Programming} 111, pp. 5--32, 2008.
-
-\bibitem{abmstango} R. Andreani, E. G. Birgin, J. M. Mart\'{\i}nez and M. L. Schuverdt, On Augmented Lagrangian methods with general lower-level constraints, \textit{SIAM Journal on Optimization} 18, pp. 1286--1309, 2008.
-
 \bibitem{dunder1} R. Andreani, C. Dunder and J. M. Mart\'{\i}nez, Order-Value Optimization: Formulation and solution by means of a primal Cauchy method, \textit{Mathematical Methods of Operations Research} 58, pp. 387--399, 2003.
 
 \bibitem{dunder2} R. Andreani, C. Dunder and J. M. Mart\'{\i}nez, Nonlinear-programming reformulation of the order-value optimization problem, \textit{Mathematical Methods of Operations Research} 61, pp. 365--384, 2005.
@@ -953,9 +984,7 @@ and a cubically regularized subproblem.
 
 \bibitem{cogtbook} C. Cartis, N. I. M. Gould, and Ph. L. Toint, \textit{Evaluation Complexity of Algorithms for Nonconvex Optimization: Theory, Computation, and Perspectives}, SIAM, Philadelphia, PA, 2022.
 
-\bibitem{farrington} C. P. Farrington, Modelling forces of infection for measles, mumps and rubella, \textit{Statistics in Medicine} 9, pp. 953--967, 1990.
-
-\bibitem{gauvin} J. Gauvin, A necessary and sufficient regularity condition to have bounded multipliers in nonconvex programming, \textit{Mathematical Programming} 12, pp. 136--138.
+\bibitem{gauvin} J. Gauvin, A necessary and sufficient regularity condition to have bounded multipliers in nonconvex programming, \textit{Mathematical Programming} 12, pp. 136--138, 1977.
   
 \bibitem{jorion} P. Jorion, \textit{Value at {R}isk: {T}he new benchmark for managing financial risk}, 3rd. ed., McGraw-Hill, 2009.
 

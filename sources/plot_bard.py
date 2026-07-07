@@ -10,8 +10,11 @@ parent = os.path.abspath(os.path.join(cwd, os.pardir))
 size_img = 0.6
 plt.rcParams.update({'font.size': 11})
 plt.rcParams['figure.figsize'] = [size_img * 6.4, size_img * 4.8]
-plt.rc('text', usetex=True)
-plt.rc('font', family='serif')
+plt.rcParams['axes.unicode_minus'] = False
+plt.rc('text', usetex=False)
+plt.rcParams['mathtext.fontset'] = 'cm'
+plt.rcParams['font.family'] = 'serif'
+plt.rcParams['font.serif'] = ['cmr10', 'STIXGeneral', 'DejaVu Serif']
 
 df_data = pd.read_table(parent+"/data/bard.txt", delimiter=" ", header=None, skiprows=1, skipinitialspace=True)
 df_sol = pd.read_table(parent+"/output/solution_bard.txt", delimiter=" ", header=None, skiprows=0, skipinitialspace=True)

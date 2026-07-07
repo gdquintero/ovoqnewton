@@ -1,0 +1,1 @@
+method &     ndata &    obar &       o &     f(x*)  &  #it & #fcnt &      Time  &  Time/#fcnt \\
