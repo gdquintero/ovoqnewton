@@ -12,7 +12,7 @@ parent = os.path.abspath(os.path.join(cwd, os.pardir))
 # Problem name is passed as a command-line argument, e.g.:
 #   python least_squares.py bard
 if len(sys.argv) < 2:
-    sys.exit("Usage: python least_squares.py <problem>   (e.g. bard, andreani, scalbard)")
+    sys.exit("Usage: python least_squares.py <problem>   (e.g. bard, andreani)")
 
 problem = sys.argv[1]
 
@@ -20,7 +20,6 @@ problem = sys.argv[1]
 init_points = {
     "bard":     np.array([1.0, 1.0, 1.0]),
     "andreani": np.array([1.0, 1.0, 1.0, 1.0]),
-    "scalbard": np.array([1.0, 1.0, 1.0]),
 }
 
 # Box constraints per problem, matching the Fortran driver. For Bard-type models
@@ -28,11 +27,9 @@ init_points = {
 # spurious minimum (x2,x3 -> +-inf) into which an unconstrained fit diverges.
 bounds = {
     "bard":     ([-10.0, 0.1, 0.1], [10.0, 10.0, 10.0]),
-    "scalbard": ([-10.0, 0.1, 0.1], [10.0, 10.0, 10.0]),
 }
 
-# The scalability experiment reuses the Bard model on synthetic data.
-model = models.bard if problem == "scalbard" else getattr(models, problem)
+model = getattr(models, problem)
 init = init_points.get(problem, np.ones(model.__code__.co_argcount - 1))
 
 df = pd.read_table(parent+"/data/"+problem+".txt", delimiter=" ", header=None,
@@ -50,9 +47,7 @@ with open(parent+"/output/sol_ls_"+problem+".txt", "w") as f:
 
 print("LS fit ("+problem+"):", popt)
 
-# Skip the interactive plot for the scalability sweep (run non-interactively).
-if problem != "scalbard":
-    t = np.linspace(df[0].values[0], df[0].values[-1], 1000)
-    plt.plot(df[0].values, df[1].values, "ko", ms=2)
-    plt.plot(t, model(t, *popt), lw=1)
-    plt.show()
+t = np.linspace(df[0].values[0], df[0].values[-1], 1000)
+plt.plot(df[0].values, df[1].values, "ko", ms=2)
+plt.plot(t, model(t, *popt), lw=1)
+plt.show()
