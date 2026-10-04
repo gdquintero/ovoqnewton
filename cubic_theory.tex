@@ -1,0 +1,603 @@
+\documentclass[11pt]{article}
+
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\setlength{\textwidth}     {16.0cm}
+\setlength{\textheight}    {21.0cm}
+\setlength{\evensidemargin}{ 0.0cm}
+\setlength{\oddsidemargin} { 0.0cm}
+\setlength{\topmargin}     {-0.5cm}
+
+\newcommand{\xkjtrial}{x^{k,j}_{\mathrm{trial}}}
+\newcommand{\minimize}{\mathop{\text{Minimize}}}
+\newcommand{\flow}{f_{\mathrm{low}}}
+\newcommand{\dkj}{d^{k,j}}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{assumption}{Assumption}
+\renewcommand\theassumption{A\arabic{assumption}}
+
+\newcounter{alg}[section]
+\renewcommand{\thealg}{\thesection.\arabic{alg}}
+
+\usepackage[mathlines]{lineno}
+\renewcommand\linenumberfont{\normalfont\small\color{gray}}
+\linenumbers
+
+\begin{document}
+
+\title{Cubic regularization for box-constrained order-value optimization\\
+\large A draft of the modified theory}
+\date{\today}
+\maketitle
+
+\begin{abstract}
+This note develops the complexity theory for the variant of the regularized
+Newton-type method for order-value optimization in which the Tikhonov term
+$\tfrac{\sigma}{2}\|x - \bar{x}\|^2$ of the model is replaced by the cubic term
+$\tfrac{\sigma}{3}\|x - \bar{x}\|^3$. The optimality condition
+$C_{\delta,\epsilon}$ and the outer structure of the method are unchanged, so
+the resulting bounds are directly comparable with those of the quadratically
+regularized method. Three things change, and all three are visible in the
+numerical experiments. First, the iteration complexity improves from
+$O(\delta^{-2}\epsilon^{-2})$ to $O(\delta^{-3}\epsilon^{-3/2})$, so that the
+cubic bound is the smaller of the two precisely when $\epsilon < \delta^{2}$.
+Second, the improved order requires the curvature matrices to \emph{dominate}
+the component Hessians, $B_i \succeq \nabla^2 f_i$, which makes the curvature an
+essential ingredient rather than an optional one: the choice $B_i = 0$ is no
+longer covered. Third, the improvement is an improvement in outer iterations
+only; the number of function evaluations carries an extra
+$\log_\gamma \bar{\sigma}$ factor that grows with the regularization threshold,
+which is larger in the cubic case.
+\end{abstract}
+
+\section{What changes and what does not}
+
+We keep the notation of the main paper. Given $f_1,\dots,f_m$ and
+$p \in \{1,\dots,m\}$, the order-value function $f$ returns the $p$th smallest
+value of $f_1(x),\dots,f_m(x)$, the problem is
+$\minimize_{x \in \Omega} f(x)$ over the box
+$\Omega = \{x \mid \ell \leq x \leq u\}$, and for $\delta > 0$
+\[
+I_\delta(x) := \{ i \mid f(x) - \delta \leq f_i(x) \leq f(x) + \delta \}
+\]
+is the active index set. Given $M > 0$, a family
+$\mathcal{B} = \{B_i\}_{i=1}^m$ of symmetric matrices with $B_i \succeq 0$ and
+$\|B_i\| \leq M$ is called \emph{admissible}.
+
+The \emph{cubically regularized model} at $\bar{x} \in \Omega$ is
+\begin{equation} \label{c-model}
+\Psi_c(x; \bar{x}, \mathcal{B}, \delta, \sigma) =
+\max_{i \in I_\delta(\bar{x})}
+\left\lbrace \nabla f_i(\bar{x})^T(x - \bar{x})
++ \tfrac{1}{2}(x - \bar{x})^T B_i (x - \bar{x}) \right\rbrace
++ \frac{\sigma}{3}\|x - \bar{x}\|^3 .
+\end{equation}
+Since the regularization does not depend on $i$, writing it inside or outside
+the maximum is the same function; the implementation puts it inside each
+component, which is what the constraint-wise formulation of the subproblem
+requires.
+
+\begin{remark} \label{rem:strict}
+$\Psi_c$ is convex, being a maximum of convex quadratics plus a convex term.
+It is \emph{strictly} convex, because $x \mapsto \|x - \bar{x}\|^3$ is: if
+$d_1 \neq d_2$ then
+$\|\tfrac{d_1+d_2}{2}\| \leq \tfrac{1}{2}(\|d_1\| + \|d_2\|)$ and $t \mapsto
+t^3$ is strictly convex on $[0,\infty)$, so equality forces
+$\|d_1\| = \|d_2\|$ together with equality in the triangle inequality, hence
+$d_1 = d_2$. Therefore the subproblem
+\begin{equation} \label{c-subpro}
+\minimize_{x \in \Omega}\, \Psi_c(x; x^k, \mathcal{B}_{k,j}, \delta, \sigma_{k,j})
+\end{equation}
+still has a unique global minimizer and every stationary point is global. Note
+that $\Psi_c$ is \emph{not} strongly convex --- its curvature degenerates at
+$x = \bar{x}$ --- so the uniqueness argument of the quadratic case, which
+invoked strong convexity, has to be replaced by the above.
+\end{remark}
+
+\medskip
+\noindent\refstepcounter{alg}\label{alg:cubic}\textbf{Algorithm~\thealg\ (cubic
+variant).} Let $\delta > 0$, $\sigma_{\min} > 0$, $M > 0$, $\alpha \in (0,1)$,
+$\gamma > 1$, and $x^0 \in \Omega$ be given. Initialize $k \leftarrow 0$.
+\begin{description}
+\item[Step~1.] Initialize $j \leftarrow 0$ and $\sigma_{k,j} = \sigma_{\min}$.
+\item[Step~2.] Choose a curvature family $\mathcal{B}_{k,j}$ satisfying
+Assumption~\ref{a6} below and compute $\xkjtrial$ as the global minimizer of
+\eqref{c-subpro}.
+\item[Step~3.] If
+    \begin{equation} \label{c-armijo}
+    f(\xkjtrial) \leq f(x^k) - \alpha \|\xkjtrial - x^k\|^3
+    \end{equation}
+does not hold, set $\sigma_{k,j+1} = \gamma\sigma_{k,j}$, $j \leftarrow j+1$,
+and go to Step~2.
+\item[Step~4.] Set $x^{k+1} = \xkjtrial$, $\sigma_k = \sigma_{k,j}$, $j_k = j$,
+$k \leftarrow k+1$, and go to Step~1.
+\end{description}
+
+Throughout we write $\dkj := \xkjtrial - x^k$. Two changes with respect to the
+quadratic method deserve emphasis. The acceptance test \eqref{c-armijo} is
+\emph{cubic} in the step: this is what matches the order of the model error
+under a Lipschitz Hessian, and it is what makes Theorem~\ref{teo:c-descent}
+below work. And Step~2 no longer accepts an arbitrary admissible family: the
+curvature must dominate the component Hessians, in the sense of
+Assumption~\ref{a6}.
+
+Everything else is untouched. In particular the following results, which
+concern only the sign structure of the model, carry over verbatim from the main
+paper.
+
+\begin{theorem} \label{teo:c-conv}
+Suppose that $f_1,\dots,f_m \in \mathcal{C}^1(\Omega)$, let $\mathcal{B}$ be
+admissible and $\sigma, \delta \geq 0$. If $x^*$ is a local minimizer of
+$\minimize_{x\in\Omega} f(x)$, then $x^*$ is a local minimizer of
+$\minimize_{x \in \Omega} \Psi_c(x; x^*, \mathcal{B}, \delta, \sigma)$.
+\end{theorem}
+
+\begin{proof}
+Identical to the chain of Theorems~3.1--3.3 of the main paper. The only place
+where the shape of the regularization enters is the step in which one argues
+that, if some $y^*$ makes every component of the model negative, then already
+the linear parts are negative: there one uses that
+$\tfrac{1}{2}(y^*-x^*)^TB_i(y^*-x^*) \geq 0$ because $B_i \succeq 0$ and that
+the regularization term is nonnegative. Since
+$\tfrac{\sigma}{3}\|y^*-x^*\|^3 \geq 0$ for $\sigma \geq 0$, the argument is
+unchanged.
+\end{proof}
+
+Consequently the exact optimality condition of Corollary~3.4 and the
+approximate condition $C_{\delta,\epsilon}$ of Definition~3.5 are
+\emph{literally the same} for both methods: there exist
+$\mu \in \Sigma_{|I_\delta(x)|}$ and $\nu^\ell,\nu^u \in \mathbb{R}^n_+$ with
+$(\ell_i - x_i)\nu^\ell_i = (x_i - u_i)\nu^u_i = 0$ and
+\begin{equation} \label{c-optcond}
+\Big\| \sum_{i \in I_\delta(x)} \mu_i \nabla f_i(x)
++ \sum_{i=1}^n (\nu^u_i - \nu^\ell_i)e_i \Big\| \leq \epsilon .
+\end{equation}
+This is what makes the two complexity bounds comparable: they count iterations
+until the same quantity falls below the same threshold.
+
+\section{The step equation and the step bound}
+
+Assumptions~\ref{a1}--\ref{a3} are those of the main paper.
+
+\begin{assumption} \label{a1}
+$f_1,\dots,f_m \in \mathcal{C}^1(\Omega)$.
+\end{assumption}
+
+\begin{assumption} \label{a2}
+The multipliers of Corollary~\ref{cor:c-step} satisfy
+$\max_i |\nu^\ell_i - \nu^u_i| \leq c_\nu$ uniformly in $k$ and $j$.
+\end{assumption}
+
+\begin{assumption} \label{a3}
+$\|\nabla f_i(x)\| \leq c_\nabla$ for all $i$ and all $x \in \Omega$.
+\end{assumption}
+
+\begin{corollary} \label{cor:c-step}
+Under Assumption~\ref{a1}, for every $k$ and $j = 0,\dots,j_k$ there exist
+$\mu \in \Sigma_{|I_\delta(x^k)|}$ and $\nu^\ell,\nu^u \in \mathbb{R}^n_+$ with
+$(\ell_i - [\xkjtrial]_i)\nu^\ell_i = ([\xkjtrial]_i - u_i)\nu^u_i = 0$ and
+\begin{equation} \label{c-eqcoro}
+\big( \bar{B}_{k,j} + \sigma_{k,j}\|\dkj\|\, I \big)\dkj
+= \sum_{i=1}^n (\nu^\ell_i - \nu^u_i)e_i
+- \sum_{i \in I_\delta(x^k)} \mu_i \nabla f_i(x^k),
+\end{equation}
+where $\bar{B}_{k,j} := \sum_{i \in I_\delta(x^k)} \mu_i B_{k,j,i}$ is
+symmetric positive semidefinite with $\|\bar{B}_{k,j}\| \leq M$.
+\end{corollary}
+
+\begin{proof}
+As in Corollary~3.6 of the main paper, the KKT conditions for the minimization
+of a maximum of differentiable functions over a box give
+\[
+\sum_{i \in I_\delta(x^k)} \mu_i
+\big[ \nabla f_i(x^k) + B_{k,j,i}\dkj \big]
++ \sigma_{k,j}\|\dkj\|\,\dkj
++ \sum_{i=1}^n (\nu^u_i - \nu^\ell_i)e_i = 0 .
+\]
+The function $d \mapsto \tfrac{\sigma}{3}\|d\|^3$ is continuously
+differentiable on all of $\mathbb{R}^n$ with gradient $\sigma\|d\|d$, which
+vanishes at $d = 0$; no nonsmoothness is introduced at the reference point.
+Since $\sum_i \mu_i = 1$, the curvature terms collect into
+$\bar{B}_{k,j}\dkj$, and $\bar{B}_{k,j}$, a convex combination of symmetric
+positive semidefinite matrices of norm at most $M$, has the stated properties.
+\end{proof}
+
+The difference with the quadratic case is now visible: the matrix acting on the
+step is $\bar{B}_{k,j} + \sigma_{k,j}\|\dkj\| I$ rather than
+$\bar{B}_{k,j} + \sigma_{k,j} I$. Its smallest eigenvalue degenerates with the
+step, and the resulting step bound is correspondingly weaker.
+
+\begin{lemma} \label{lem:c-step}
+Under Assumptions~\ref{a1}--\ref{a3},
+\begin{equation} \label{c-ccotasub}
+\|\dkj\| \leq \sqrt{\frac{c_x}{\sigma_{k,j}}}, \qquad
+c_x := n\,c_\nu + c_\nabla .
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+The right-hand side of \eqref{c-eqcoro} has norm at most
+$\sum_{i=1}^n |\nu^\ell_i - \nu^u_i| + \sum_i \mu_i\|\nabla f_i(x^k)\|
+\leq n c_\nu + c_\nabla = c_x$. For the left-hand side, if $\dkj \neq 0$ then
+by Cauchy--Schwarz and $\bar{B}_{k,j} \succeq 0$,
+\begin{align*}
+\big\|(\bar{B}_{k,j} + \sigma_{k,j}\|\dkj\| I)\dkj\big\|\,\|\dkj\|
+&\geq \big\langle (\bar{B}_{k,j} + \sigma_{k,j}\|\dkj\| I)\dkj, \dkj
+      \big\rangle \\
+&= (\dkj)^T\bar{B}_{k,j}\dkj + \sigma_{k,j}\|\dkj\|^3
+\ \geq\ \sigma_{k,j}\|\dkj\|^3 ,
+\end{align*}
+so that
+$\|(\bar{B}_{k,j} + \sigma_{k,j}\|\dkj\| I)\dkj\| \geq \sigma_{k,j}\|\dkj\|^2$.
+Combining, $\sigma_{k,j}\|\dkj\|^2 \leq c_x$, which is \eqref{c-ccotasub}; the
+case $\dkj = 0$ is trivial.
+\end{proof}
+
+\begin{remark}
+In the quadratic method the corresponding bound is $\|\dkj\| \leq
+c_x/\sigma_{k,j}$. The cubic step therefore shrinks only like
+$\sigma_{k,j}^{-1/2}$. Since the mechanism that keeps the trial point inside the
+$\delta$-band is precisely the smallness of the step, this is the reason why
+the regularization threshold below deteriorates from $\delta^{-1}$ to
+$\delta^{-2}$.
+\end{remark}
+
+\section{Sufficient descent}
+
+The quadratic theory needed only a Lipschitz gradient. The cubic term is of
+higher order than the quadratic model error $\tfrac{L}{2}\|d\|^2$ and cannot
+absorb it for small steps, so a Lipschitz gradient is no longer enough: we need
+the model to be a genuine second-order model, with a Lipschitz Hessian and with
+curvature matrices that dominate the true ones.
+
+\begin{assumption} \label{a4}
+There is $L > 0$ with
+$\|\nabla f_i(y) - \nabla f_i(x)\| \leq L\|y-x\|$ for all $i$ and
+$x,y \in \Omega$.
+\end{assumption}
+
+\begin{assumption} \label{a5}
+$f_1,\dots,f_m \in \mathcal{C}^2(\Omega)$ and there is $L_H > 0$ with
+$\|\nabla^2 f_i(y) - \nabla^2 f_i(x)\| \leq L_H\|y-x\|$ for all $i$ and
+$x,y \in \Omega$.
+\end{assumption}
+
+\begin{assumption}[dominating curvature] \label{a6}
+For all $k$, all $j = 0,\dots,j_k$ and all $i \in I_\delta(x^k)$,
+\[
+B_{k,j,i} \succeq \nabla^2 f_i(x^k), \qquad
+B_{k,j,i} \succeq 0, \qquad \|B_{k,j,i}\| \leq M .
+\]
+\end{assumption}
+
+Assumption~\ref{a5} gives the standard cubic Taylor bound
+\begin{equation} \label{c-taylor}
+f_i(y) \leq f_i(x) + \nabla f_i(x)^T(y-x)
++ \tfrac{1}{2}(y-x)^T\nabla^2 f_i(x)(y-x)
++ \tfrac{L_H}{6}\|y-x\|^3 .
+\end{equation}
+
+\begin{remark}[on Assumption~\ref{a6}] \label{rem:a6}
+The shifted exact Hessian
+\[
+B_{k,j,i} = \nabla^2 f_i(x^k) + \tau_{k,i} I, \qquad
+\tau_{k,i} := \max\{0,\, -\lambda_{\min}(\nabla^2 f_i(x^k))\},
+\]
+satisfies Assumption~\ref{a6} with
+$M := \max_{i}\sup_{x \in \Omega} \big( \|\nabla^2 f_i(x)\|
++ \max\{0, -\lambda_{\min}(\nabla^2 f_i(x))\} \big)$, which is finite because
+$\Omega$ is compact and $f_i \in \mathcal{C}^2$. This is exactly the matrix
+built by the implementation.
+
+Two consequences must be stated plainly. First, $M$ is no longer a free
+parameter that the method may impose: it is a quantity determined by the
+problem. Rescaling $B_{k,j,i}$ by $M/\lambda_{\max}$ to force a prescribed
+bound, as the current implementation does, destroys the domination
+$B_{k,j,i} \succeq \nabla^2 f_i(x^k)$ whenever the rescaling is active, and
+with it Theorem~\ref{teo:c-descent}. Second, and more importantly, the choice
+$B_{k,j,i} = 0$ is admissible only if $\nabla^2 f_i(x^k) \preceq 0$. The
+first-order method is therefore \emph{not} a special case of the theory of this
+note: with cubic regularization, curvature is not an optional refinement but a
+requirement of the analysis. Quasi-Newton families such as BFGS or SR1 are
+admissible only insofar as they can be certified to dominate the component
+Hessians, which the plain updates do not guarantee.
+\end{remark}
+
+\begin{theorem}[sufficient descent] \label{teo:c-descent}
+Suppose that Assumptions~\ref{a1}, \ref{a3}, \ref{a4}, \ref{a5} and \ref{a6}
+hold. Then, for all $k$ and $j = 0,\dots,j_k$, if
+\begin{equation} \label{c-este}
+\sigma_{k,j} \geq \Theta(\delta) :=
+\max\left\{ \frac{L_H}{2} + 3\alpha,\ \frac{36\,c_x^3}{\delta^2},\
+\frac{3\,L\,c_x}{\delta} \right\},
+\end{equation}
+then $\xkjtrial$ satisfies \eqref{c-armijo}.
+\end{theorem}
+
+\begin{proof}
+Write $d := \dkj$ and $\sigma := \sigma_{k,j}$.
+
+\emph{Step 1: descent for the active components.}
+Let $i \in I_\delta(x^k)$. By \eqref{c-taylor} and then Assumption~\ref{a6},
+\begin{align*}
+f_i(\xkjtrial) &\leq f_i(x^k) + \nabla f_i(x^k)^Td
++ \tfrac{1}{2}d^T\nabla^2 f_i(x^k)d + \tfrac{L_H}{6}\|d\|^3 \\
+&\leq f_i(x^k) + \nabla f_i(x^k)^Td + \tfrac{1}{2}d^TB_{k,j,i}d
++ \tfrac{L_H}{6}\|d\|^3 .
+\end{align*}
+Since $\xkjtrial$ minimizes \eqref{c-subpro} and
+$\Psi_c(x^k; x^k,\mathcal{B}_{k,j},\delta,\sigma) = 0$, we have
+$\Psi_c(\xkjtrial;\cdot) \leq 0$; as $\Psi_c$ bounds each of the components of
+its maximum,
+\[
+\nabla f_i(x^k)^Td + \tfrac{1}{2}d^TB_{k,j,i}d + \tfrac{\sigma}{3}\|d\|^3
+\leq 0 \qquad \text{for all } i \in I_\delta(x^k).
+\]
+Substituting,
+\begin{equation} \label{c-cota-lem2}
+f_i(\xkjtrial) \leq f_i(x^k)
+- \Big( \frac{\sigma}{3} - \frac{L_H}{6} \Big)\|d\|^3
+\leq f_i(x^k) - \alpha\|d\|^3, \qquad i \in I_\delta(x^k),
+\end{equation}
+the last inequality because \eqref{c-este} gives
+$\sigma \geq \tfrac{L_H}{2} + 3\alpha$, i.e.\
+$\tfrac{\sigma}{3} - \tfrac{L_H}{6} \geq \alpha$.
+
+\emph{Step 2: the active set does not move out of the band.}
+By Assumption~\ref{a4} and Cauchy--Schwarz, for every
+$i \in \{1,\dots,m\}$,
+\[
+|f_i(\xkjtrial) - f_i(x^k)| \leq \|\nabla f_i(x^k)\|\,\|d\|
++ \tfrac{L}{2}\|d\|^2 \leq c_x\|d\| + \tfrac{L}{2}\|d\|^2 ,
+\]
+using $c_\nabla \leq c_x$. By Lemma~\ref{lem:c-step},
+$\|d\| \leq (c_x/\sigma)^{1/2}$, hence
+\[
+|f_i(\xkjtrial) - f_i(x^k)| \leq \frac{c_x^{3/2}}{\sigma^{1/2}}
++ \frac{L\,c_x}{2\sigma} .
+\]
+By \eqref{c-este}, $\sigma \geq 36c_x^3/\delta^2$ gives
+$c_x^{3/2}\sigma^{-1/2} \leq \delta/6$, and $\sigma \geq 3Lc_x/\delta$ gives
+$Lc_x/(2\sigma) \leq \delta/6$. Therefore
+\begin{equation} \label{c-teo7eq1}
+|f_i(\xkjtrial) - f_i(x^k)| \leq \frac{\delta}{3}, \qquad i = 1,\dots,m .
+\end{equation}
+
+\emph{Step 3: transfer to the order-value function.}
+From \eqref{c-teo7eq1}, any index with $f_i(x^k) < f(x^k) - \delta$ satisfies
+$f_i(\xkjtrial) < f(x^k)$ and any index with $f_i(x^k) > f(x^k) + \delta$
+satisfies $f_i(\xkjtrial) > f(x^k)$; in particular
+$i_p(\xkjtrial) \in I_\delta(x^k)$ and the number of components below the band
+is the same at $x^k$ and at $\xkjtrial$. Writing
+$I_\delta(x^k) = \{i_1,\dots,i_r\}$ with
+$f_{i_1}(x^k) \leq \cdots \leq f_{i_r}(x^k)$ and reordering as
+$\{i'_1,\dots,i'_r\}$ so that
+$f_{i'_1}(\xkjtrial) \leq \cdots \leq f_{i'_r}(\xkjtrial)$, the indices
+$i_p(x^k)$ and $i_p(\xkjtrial)$ occupy the same position $q$ within the band.
+Applying Lemma~2.1 of \cite{dunder1} with $a_j = f_{i_j}(x^k)$,
+$b_j = f_{i_j}(\xkjtrial)$ and $\beta = \alpha\|d\|^3$ ---legitimate by
+\eqref{c-cota-lem2}--- yields
+$f_{i'_q}(\xkjtrial) \leq f_{i_q}(x^k) - \beta$, that is,
+$f(\xkjtrial) \leq f(x^k) - \alpha\|d\|^3$, which is \eqref{c-armijo}.
+\end{proof}
+
+Note that Step~3 is where the cubic form of the acceptance test
+\eqref{c-armijo} is forced: the ordering lemma transfers exactly the constant
+$\beta$ obtained in \eqref{c-cota-lem2} from the components to $f$, and that
+constant is $\alpha\|d\|^3$.
+
+\section{Complexity}
+
+\begin{theorem} \label{teo:c-complexity}
+Suppose that Assumptions~\ref{a1}, \ref{a3}--\ref{a6} hold and that
+$f(x) \geq \flow$ on $\Omega$. Put
+$\bar{\sigma} := \gamma\,\Theta(\delta)$ with $\Theta(\delta)$ as in
+\eqref{c-este}. Then $\sigma_k \leq \bar{\sigma}$ for every $k$, at most
+\begin{equation} \label{c-cota-fcnt}
+\big\lfloor 1 + \log_\gamma(\sigma_k/\sigma_{\min}) \big\rfloor
+\end{equation}
+function evaluations are performed per outer iteration, and the number of outer
+iterations at which $C_{\delta,\epsilon}$ fails at $x^{k+1}$ is at most
+\begin{equation} \label{c-cota-iter}
+\left\lfloor \frac{f(x^0) - \flow}{\alpha}\,
+\max\left\{ \left(\frac{2M}{\epsilon}\right)^{3},\
+\left(\frac{2\bar{\sigma}}{\epsilon}\right)^{3/2} \right\} \right\rfloor .
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+The bound $\sigma_k \leq \bar\sigma$ and \eqref{c-cota-fcnt} follow from
+Theorem~\ref{teo:c-descent} and the update $\sigma_{k,j+1} = \gamma\sigma_{k,j}$
+exactly as in the quadratic case: starting from $\sigma_{k,0} = \sigma_{\min}$,
+at most $\lfloor 1 + \log_\gamma(\sigma_k/\sigma_{\min})\rfloor$ increases occur
+before \eqref{c-este} holds, and one function evaluation is spent per increase.
+
+Let $K$ be the set of outer indices at which $C_{\delta,\epsilon}$ fails at
+$x^{k+1}$, fix $k \in K$, and write $d_k := x^{k+1} - x^k$,
+$\bar{B}_k := \bar{B}_{k,j_k}$. By Corollary~\ref{cor:c-step} and the failure
+of \eqref{c-optcond},
+\[
+\epsilon < \Big\| \sum_{i \in I_\delta(x^k)} \mu_i\nabla f_i(x^k)
++ \sum_{i=1}^n(\nu^u_i - \nu^\ell_i)e_i \Big\|
+= \big\| (\bar{B}_k + \sigma_k\|d_k\| I)d_k \big\|
+\leq M\|d_k\| + \sigma_k\|d_k\|^2 .
+\]
+Hence at least one of $M\|d_k\| > \epsilon/2$ and
+$\sigma_k\|d_k\|^2 > \epsilon/2$ holds, so that, using
+$\sigma_k \leq \bar\sigma$,
+\[
+\|d_k\| > \min\left\{ \frac{\epsilon}{2M},\
+\sqrt{\frac{\epsilon}{2\bar{\sigma}}} \right\} =: s_\epsilon .
+\]
+Since $x^{k+1}$ satisfies \eqref{c-armijo},
+$f(x^{k+1}) \leq f(x^k) - \alpha\|d_k\|^3 < f(x^k) - \alpha s_\epsilon^3$.
+Summing over $k \in K$ and using $f \geq \flow$ gives
+$f(x^0) - \flow > |K|\,\alpha\, s_\epsilon^3$, and
+$s_\epsilon^{-3} = \max\{(2M/\epsilon)^3, (2\bar\sigma/\epsilon)^{3/2}\}$
+yields \eqref{c-cota-iter}.
+\end{proof}
+
+The bound \eqref{c-cota-iter} has two branches, and which one is active is
+decided by the size of the curvature relative to the target accuracy.
+
+\begin{corollary} \label{cor:c-regime}
+Under the hypotheses of Theorem~\ref{teo:c-complexity}, if
+\begin{equation} \label{c-regime}
+\epsilon \geq \frac{2M^2}{\bar{\sigma}},
+\end{equation}
+then the number of outer iterations at which $C_{\delta,\epsilon}$ fails at
+$x^{k+1}$ is at most
+\begin{equation} \label{c-cota-clean}
+\left\lfloor \frac{f(x^0)-\flow}{\alpha}\,
+\frac{(2\bar{\sigma})^{3/2}}{\epsilon^{3/2}} \right\rfloor
+= O\!\left( \delta^{-3}\epsilon^{-3/2} \right).
+\end{equation}
+\end{corollary}
+
+\begin{proof}
+$(2M/\epsilon)^3 \leq (2\bar\sigma/\epsilon)^{3/2}$ is equivalent, on raising
+both sides to the power $2/3$, to $(2M)^2 \leq 2\bar\sigma\epsilon$, i.e.\ to
+\eqref{c-regime}; the first branch of \eqref{c-cota-iter} is then inactive. The
+order statement follows from $\bar\sigma = \gamma\Theta(\delta)$ and
+$\Theta(\delta) = O(\delta^{-2})$, so $\bar\sigma^{3/2} = O(\delta^{-3})$.
+\end{proof}
+
+\subsection*{Comparison with the quadratic method}
+
+Table~\ref{tab:comparison} collects the two analyses. The optimality condition,
+the outer loop and the inner $\sigma$-loop are identical, so the entries are
+directly comparable.
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{lll}
+\toprule
+ & quadratic $\tfrac{\sigma}{2}\|d\|^2$ & cubic $\tfrac{\sigma}{3}\|d\|^3$ \\
+\midrule
+acceptance test & $f(x^k) - \alpha\|d\|^2$ & $f(x^k) - \alpha\|d\|^3$ \\
+smoothness needed & $\nabla f_i$ Lipschitz ($L$)
+   & $\nabla^2 f_i$ Lipschitz ($L_H$), and $\nabla f_i$ Lipschitz \\
+curvature needed & $B_i \succeq 0$, $\|B_i\| \leq M$
+   & $B_i \succeq \nabla^2 f_i$, $B_i \succeq 0$, $\|B_i\|\leq M$ \\
+$B_i = 0$ admissible & yes & only if $\nabla^2 f_i \preceq 0$ \\
+step bound & $\|d\| \leq c_x/\sigma$ & $\|d\| \leq (c_x/\sigma)^{1/2}$ \\
+$\sigma$ threshold $\Theta(\delta)$ & $O(\delta^{-1})$ & $O(\delta^{-2})$ \\
+outer iterations & $O(\delta^{-2}\epsilon^{-2})$
+   & $O(\delta^{-3}\epsilon^{-3/2})$ \quad if $\epsilon \geq 2M^2/\bar\sigma$ \\
+evaluations / iteration & $\lfloor 1 + \log_\gamma(\sigma_k/\sigma_{\min})\rfloor$
+   & $\lfloor 1 + \log_\gamma(\sigma_k/\sigma_{\min})\rfloor$, larger $\sigma_k$ \\
+\bottomrule
+\end{tabular}
+\caption{The quadratically and cubically regularized methods, measured against
+the same approximate optimality condition $C_{\delta,\epsilon}$.}
+\label{tab:comparison}
+\end{table}
+
+Three consequences are worth isolating.
+
+\medskip
+\noindent\textbf{(i) The cubic bound is smaller exactly when
+$\epsilon < \delta^2$.} Ignoring constants, the two iteration bounds are
+$\delta^{-2}\epsilon^{-2}$ and $\delta^{-3}\epsilon^{-3/2}$, whose ratio is
+\[
+\frac{\delta^{-3}\epsilon^{-3/2}}{\delta^{-2}\epsilon^{-2}}
+= \frac{\epsilon^{1/2}}{\delta},
+\]
+which is less than one if and only if $\epsilon < \delta^2$. The cubic
+regularization buys accuracy in $\epsilon$ and pays for it in $\delta$: the
+narrower the active band, the larger the regularization needed to keep the
+trial point inside it, and that cost is amplified by the exponent $3/2$. The
+parameters of the numerical section, $\delta = 10^{-1}$ and
+$\epsilon = 10^{-4}$, satisfy $\epsilon < \delta^2 = 10^{-2}$ comfortably,
+which is the regime in which the cubic bound is the better of the two.
+
+\medskip
+\noindent\textbf{(ii) The curvature is what limits the improved regime.} In the
+quadratic analysis the bound $M$ on the curvature enters only through the
+constant $(M + \gamma\Theta(\delta))^2$, because $M$ and $\sigma$ multiply the
+step in the same way. Under cubic regularization the residual is
+$M\|d\| + \sigma\|d\|^2$, so the two terms scale differently and $M$ enters the
+\emph{order}: below the threshold $\epsilon < 2M^2/\bar\sigma$ the bound
+degrades to $O(\epsilon^{-3})$. The improved rate is therefore a
+moderate-accuracy statement, valid on the window
+\[
+\frac{2M^2}{\bar{\sigma}} \leq \epsilon < \delta^2 ,
+\]
+which is nonempty whenever $2M^2 < \bar\sigma\delta^2$; with
+$\bar\sigma \geq 36\gamma c_x^3\delta^{-2}$ this holds as soon as
+$M^2 < 18\gamma c_x^3$, a mild condition. One would like to shrink $M$ to widen
+the window, but Assumption~\ref{a6} forbids it: $M$ must be large enough for
+the $B_i$ to dominate the component Hessians. This is a genuine tension of the
+cubic variant and it should be stated rather than hidden.
+
+\medskip
+\noindent\textbf{(iii) The gain is in iterations, not in evaluations.} The
+total number of function evaluations is at most the number of outer iterations
+times $\lfloor 1 + \log_\gamma(\bar\sigma/\sigma_{\min})\rfloor$. The cubic
+method has a larger $\bar\sigma$ ---$O(\delta^{-2})$ against
+$O(\delta^{-1})$--- so it spends more inner increases of $\sigma$ per outer
+iteration, and the improvement in evaluations is smaller than the improvement
+in iterations by a factor of order
+$\log_\gamma(\Theta_{\text{cub}}/\Theta_{\text{quad}})
+= \log_\gamma O(\delta^{-1})$. This is precisely the pattern of the
+experiments: on the nonlinear problem the proposed method improves the mean
+iteration count by $4.44\times$ but the mean evaluation count only by
+$2.76\times$, and on the problem affine in the parameters it improves
+iterations by $1.22\times$ while \emph{losing} $8\%$ in evaluations.
+
+\section{What the implementation would have to change}
+
+Three points connect the theory above with the code that produced the numbers.
+The first has been settled; the remaining two must be reconciled before the
+numbers can be presented as illustrating these theorems.
+
+\begin{enumerate}
+\item \textbf{The acceptance test} \emph{(done).} Step~3 of the implementation
+now uses the cubic test \eqref{c-armijo} in the second-order branch, and retains
+the quadratic test $f(\xkjtrial) \leq f(x^k) - \alpha\|\xkjtrial - x^k\|^2$ in
+the first-order branch, which is the published method. Both problems were
+rerun after the change: the mean iteration and evaluation counts are
+\emph{identical} to those obtained with the quadratic test, on every value of
+$o$ and on both problems. This is what one expects, since $\alpha = 10^{-8}$ and
+$\|d\| < 1$ throughout, so the two right-hand sides differ by less than the gap
+between consecutive accepted and rejected trial points; but it is worth having
+verified rather than argued.
+
+\item \textbf{The rescaling of the curvature.} The implementation shifts the
+exact Hessian to positive definiteness and then rescales it by
+$M/\lambda_{\max}$ when $\lambda_{\max} > M$, with $M = 1$. The shift is what
+Assumption~\ref{a6} asks for; the rescaling breaks it. Either the rescaling is
+removed and $M$ is redefined as in Remark~\ref{rem:a6} as the bound that the
+shifted Hessians happen to satisfy on $\Omega$, or Theorem~\ref{teo:c-descent}
+does not apply to the runs. Removing it changes the numbers and the experiments
+would have to be rerun.
+
+\item \textbf{The first-order comparison.} The baseline in the experiments is
+the quadratically regularized method with $B_i = 0$, which is covered by the
+theory of the main paper but not by the theory of this note. That is the
+correct comparison to report ---it is the published method--- but the two
+columns of the tables are then governed by two different sets of assumptions,
+and the text must say so. In particular, the cubically regularized method with
+$B_i = 0$, which performed best of all in the exploratory runs, is not covered
+by either analysis.
+\end{enumerate}
+
+\begin{thebibliography}{9}
+\bibitem{dunder1} Order-value optimization ordering lemma; see Lemma~2.1 of the
+reference cited as \texttt{dunder1} in the main paper.
+\bibitem{alvarezovo} The first-order regularized method for order-value
+optimization generalized by the main paper.
+\end{thebibliography}
+
+\end{document}

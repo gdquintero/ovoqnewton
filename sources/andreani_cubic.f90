@@ -20,6 +20,7 @@
     real(kind=8) :: iter_sum,iter_sq,neval_sum,neval_sq,iter_mean,iter_std,neval_mean,neval_std
     real(kind=8) :: iter_arr(1000),neval_arr(1000),dummy_arr(1000),iter_med,neval_med
     real(kind=8) :: time_arr(1000),time_sum,time_mean,time_med
+    real(kind=8) :: mmax_obs
     
     ! LOCAL SCALARS
     logical :: checkder
@@ -140,6 +141,7 @@
     seed = 123456.0d0
     ntrials = 100
     fovo_best = huge(1.0d0)
+    mmax_obs = 0.0d0
     inf = -5.0d0
     sup = 5.0d0
     iter_sum = 0.0d0; iter_sq = 0.0d0
@@ -212,16 +214,19 @@
     101 format (A4,1X,I2,1X,A1,1X,F7.2,1X,A2,1X,F7.2,1X,A1,1X,F8.2,1X,A2,1X,F8.2,1X,A1,1X,ES10.3,1X,A2)
 
     write(*,102) "med", noutliers,"&",iter_med,"&",neval_med,"&",time_med,"\\"
+
+    write(*,103) "Mobs", noutliers, mmax_obs
+    103 format (A5,1X,I2,1X,"max ||B|| observed =",1X,ES12.5)
     102 format (A4,1X,I2,1X,A1,1X,F7.1,1X,A1,1X,F8.1,1X,A1,1X,ES10.3,1X,A2)
 
     ! print*, "El valor de la fovo_best es", fovo_best
     ! print*, "Solucion", xk
 
 
-    Open(Unit = 98, File = trim(pwd)//"/../output/solution_andreani.txt", ACCESS = "SEQUENTIAL")
+    Open(Unit = 98, File = trim(pwd)//"/../output/solution_andreani_cubic.txt", ACCESS = "SEQUENTIAL")
     write(98,"(11F7.3)") xk(1),xk(2),xk(3),xk(4)
 
-    Open(Unit = 99, File = trim(pwd)//"/../output/outliers_andreani.txt", ACCESS = "SEQUENTIAL")
+    Open(Unit = 99, File = trim(pwd)//"/../output/outliers_andreani_cubic.txt", ACCESS = "SEQUENTIAL")
     write(99,"(I2)") noutliers
 
     do i = 1, noutliers
@@ -252,6 +257,8 @@
         integer, parameter  :: max_iter = 10000, max_iter_sub = 100, kflag = 2
         integer             :: iter,iter_sub,i,j
         real(kind=8)        :: gaux,terminate,alpha,epsilon,lambda_min,aux_iden,lambda_max
+        integer             :: jj
+        real(kind=8)        :: cap,dvec(n-1),vtmp(n-1,n-1)
 
         alpha   = 1.0d-8
         epsilon = 1.0d-4
@@ -327,31 +334,41 @@
                 ! Copy the Hessian, since DSYEV overwrites the input matrix with the eigenvectors
                 pdata%Bkj(:,:) = hess(i,:,:)
 
-                ! Compute eigenvalues of the Hessian via DSYEV (Bkj holds the matrix on entry,
-                ! and is overwritten with the eigenvectors on exit)
-                call dsyev(pdata%JOBZ,pdata%UPLO,n-1,pdata%Bkj,pdata%LDA,&
+                ! Full eigendecomposition of the exact component Hessian: on exit
+                ! Bkj holds the (orthonormal) eigenvectors in its columns and
+                ! eig_hess the eigenvalues in ascending order
+                call dsyev('V',pdata%UPLO,n-1,pdata%Bkj,pdata%LDA,&
                 pdata%eig_hess,pdata%WORK,pdata%LWORK,pdata%INFO)
 
-                ! Smallest eigenvalue of the Hessian
-                lambda_min = minval(pdata%eig_hess)
+                lambda_min = pdata%eig_hess(1)
+                lambda_max = pdata%eig_hess(n-1)
 
-                ! Shift needed to make the Hessian positive definite (zero if already PD);
-                ! the 1.d-8 margin keeps it strictly positive
-                aux_iden =  max(0.d0,-lambda_min)
+                ! Shift needed to make the Hessian positive definite (zero if
+                ! already PD)
+                aux_iden = max(0.d0,-lambda_min)
 
-                ! Build a diagonal matrix with the shift on the diagonal
-                call dlaset('A',n-1,n-1,0.0d0,aux_iden,pdata%identity,n-1)
+                ! Eigenvalue truncation instead of global rescaling. The
+                ! curvature matrix is B = V diag(min(lambda_j + tau, c)) V^T with
+                ! c = max(M, lambda_max). Since B and Hess f_i share eigenvectors,
+                ! B - Hess f_i = V diag(min(lambda_j + tau, c) - lambda_j) V^T is
+                ! positive semidefinite precisely when c >= lambda_max, so the
+                ! domination B >= Hess f_i required by the cubic analysis is
+                ! preserved, while the excess of the shift is trimmed off the top
+                ! of the spectrum. Truncating at c < lambda_max, or rescaling the
+                ! whole matrix, would break it.
+                cap = max(pdata%M, lambda_max)
 
-                ! Add the shift to the Hessian: H <- H + aux_iden * I (regularization)
-                hess(i,:,:) = hess(i,:,:) + pdata%identity(:,:)
+                do jj = 1, n-1
+                    dvec(jj) = min(pdata%eig_hess(jj) + aux_iden, cap)
+                end do
 
-                ! Largest eigenvalue of the (already PSD-shifted) curvature matrix
-                lambda_max = maxval(pdata%eig_hess) + aux_iden
+                ! Rebuild B = V diag(dvec) V^T
+                do jj = 1, n-1
+                    vtmp(:,jj) = pdata%Bkj(:,jj) * dvec(jj)
+                end do
+                hess(i,:,:) = matmul(vtmp, transpose(pdata%Bkj))
 
-                ! Enforce ||B_{k,j}|| <= M
-                if (lambda_max > pdata%M) then
-                    hess(i,:,:) = (pdata%M / lambda_max) * hess(i,:,:)
-                end if
+                mmax_obs = max(mmax_obs, maxval(dvec))
 
                 if (cauchy .eqv. .true.) then
                     hess(:,:,:) = 0.d0
@@ -392,9 +409,16 @@
                 fxtrial = faux(q)
                 n_eval = n_eval + 1
         
-                ! Test the sufficient descent condition
-                ! if (fxtrial .le. (fxk - alpha * norm2(xtrial(1:n-1) - xk(1:n-1))**2)) exit
-                if (fxtrial .le. (fxk - alpha * dot_product(xtrial(1:n-1) - xk(1:n-1),xtrial(1:n-1) - xk(1:n-1)))) exit
+                ! Test the sufficient descent condition. The first-order method
+                ! (quadratic Tikhonov regularization) uses the quadratic test of
+                ! the published method; the cubically regularized second-order
+                ! model requires the cubic test, which is the constant the
+                ! ordering lemma transfers from the components to f
+                if (cauchy) then
+                    if (fxtrial .le. (fxk - alpha * dot_product(xtrial(1:n-1) - xk(1:n-1),xtrial(1:n-1) - xk(1:n-1)))) exit
+                else
+                    if (fxtrial .le. (fxk - alpha * norm2(xtrial(1:n-1) - xk(1:n-1))**3)) exit
+                end if
                 if (iter_sub .ge. max_iter_sub) exit
     
                 sigma = gamma * sigma
@@ -626,13 +650,27 @@
         ! ARRAY ARGUMENTS
         real(kind=8), intent(in) :: x(n)
 
+        ! LOCAL
+        real(kind=8) :: d(n-1),nd
+
         ! Compute ind-th constraint
         flag = 0
 
-        c = dot_product(x(1:n-1) - xk(1:n-1),grad(ind,1:n-1)) + 0.5d0 * &
-            (dot_product(x(1:n-1) - xk(1:n-1),matmul(hess(ind,1:n-1,1:n-1),x(1:n-1) - xk(1:n-1))) + &
-            sigma * dot_product(x(1:n-1) - xk(1:n-1),x(1:n-1) - xk(1:n-1))) - x(n)
-        
+        ! The first-order method (B = 0) keeps the quadratic Tikhonov term
+        ! (sigma/2)*||d||^2; the second-order model uses the cubic
+        ! regularization (sigma/3)*||d||^3
+        d(:) = x(1:n-1) - xk(1:n-1)
+        nd   = norm2(d)
+
+        c = dot_product(d,grad(ind,1:n-1)) &
+            + 0.5d0 * dot_product(d,matmul(hess(ind,1:n-1,1:n-1),d)) - x(n)
+
+        if (cauchy) then
+            c = c + 0.5d0 * sigma * nd**2
+        else
+            c = c + (sigma / 3.0d0) * nd**3
+        end if
+
     end subroutine myevalc
 
     !******************************************************************************
@@ -653,6 +691,7 @@
         real(kind=8), intent(out) :: jcval(lim)
 
         integer :: i
+        real(kind=8) :: d(n-1),nd
 
         flag = 0
         lmem = .false.
@@ -664,10 +703,22 @@
             return
         end if
 
+        ! Gradient of the regularization: sigma*d (quadratic, first order) or
+        ! sigma*||d||*d (cubic, second order)
+        d(:) = x(1:n-1) - xk(1:n-1)
+        nd   = norm2(d)
+
         jcvar(1:n) = (/(i, i = 1, n)/)
-        jcval(1:n) = (/grad(ind,1:n-1) + & 
-                    matmul(hess(ind,1:n-1,1:n-1),x(1:n-1) - xk(1:n-1)) + &
-                    sigma * (x(1:n-1) - xk(1:n-1)), -1.0d0/)
+
+        if (cauchy) then
+            jcval(1:n) = (/grad(ind,1:n-1) + &
+                        matmul(hess(ind,1:n-1,1:n-1),d) + &
+                        sigma * d, -1.0d0/)
+        else
+            jcval(1:n) = (/grad(ind,1:n-1) + &
+                        matmul(hess(ind,1:n-1,1:n-1),d) + &
+                        sigma * nd * d, -1.0d0/)
+        end if
 
     end subroutine myevaljac
 
@@ -690,10 +741,17 @@
 
         ! LOCAL SCALARS
         integer :: i,j
+        real(kind=8) :: d(n-1),nd
 
         flag = 0
         lmem = .false.
-    
+
+        ! Hessian of the regularization: sigma*I (quadratic, first order) or
+        ! sigma*(||d||*I + d*d^T/||d||) (cubic, second order), the latter
+        ! vanishing at d = 0
+        d(:) = x(1:n-1) - xk(1:n-1)
+        nd   = norm2(d)
+
         hcnnz = 0
         do j = 1, n-1
             do i = j, n-1
@@ -707,10 +765,13 @@
                 hcrow(hcnnz) = i
                 hccol(hcnnz) = j
 
-                if ( i .eq. j ) then
-                    hcval(hcnnz) = hess(ind,i,j) + sigma
-                else
-                    hcval(hcnnz) = hess(ind,i,j)
+                hcval(hcnnz) = hess(ind,i,j)
+
+                if ( cauchy ) then
+                    if ( i .eq. j ) hcval(hcnnz) = hcval(hcnnz) + sigma
+                else if ( nd .gt. 0.0d0 ) then
+                    hcval(hcnnz) = hcval(hcnnz) + sigma * d(i) * d(j) / nd
+                    if ( i .eq. j ) hcval(hcnnz) = hcval(hcnnz) + sigma * nd
                 end if
             end do
         end do

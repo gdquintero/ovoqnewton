@@ -11,7 +11,7 @@ bash sort.sh   || exit 1
 bash subset.sh || exit 1
 
 # Enlazar el principal
-gfortran -O3 -w -fcheck=all -g bard.f90 -L$ALGENCAN/lib -lalgencan -lhsl sort.o subset.o -llapack -o bard
+gfortran -O3 -w bard.f90 -L$ALGENCAN/lib -lalgencan -lhsl sort.o subset.o -llapack -o bard
 
 delta=1.0d-1
 sigmin=1.0d-1

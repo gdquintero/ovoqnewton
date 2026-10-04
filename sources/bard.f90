@@ -19,6 +19,7 @@
     real(kind=8) :: fovo,delta,sigmin,gamma,start,finish
     real(kind=8) :: iter_sum,iter_sq,neval_sum,neval_sq,iter_mean,iter_std,neval_mean,neval_std
     real(kind=8) :: iter_arr(1000),neval_arr(1000),dummy_arr(1000),iter_med,neval_med
+    real(kind=8) :: time_arr(1000),time_sum,time_mean,time_med
     
     ! LOCAL SCALARS
     logical :: checkder
@@ -143,6 +144,7 @@
     fovo_best = huge(1.0d0)
     iter_sum = 0.0d0; iter_sq = 0.0d0
     neval_sum = 0.0d0; neval_sq = 0.0d0
+    time_sum = 0.0d0
 
     do itrial = 1,ntrials
         xk(:) = xinit(:)
@@ -164,6 +166,8 @@
         neval_sq  = neval_sq  + dble(n_eval)**2
         iter_arr(itrial)  = dble(iterations)
         neval_arr(itrial) = dble(n_eval)
+        time_sum          = time_sum + tiempo
+        time_arr(itrial)  = tiempo
 
         if (fovo .lt. fovo_best) then
             time_best = tiempo
@@ -185,28 +189,32 @@
     ! Mean and standard deviation of #it and #fcnt over the multistart trials
     iter_mean  = iter_sum / dble(ntrials)
     neval_mean = neval_sum / dble(ntrials)
+    time_mean  = time_sum / dble(ntrials)
     iter_std   = sqrt(max(0.0d0, iter_sq /dble(ntrials) - iter_mean**2))
     neval_std  = sqrt(max(0.0d0, neval_sq/dble(ntrials) - neval_mean**2))
 
     ! Median over the multistart trials (robust to the heavy tail)
     call DSORT(iter_arr, dummy_arr, ntrials, 1)
     call DSORT(neval_arr, dummy_arr, ntrials, 1)
+    call DSORT(time_arr, dummy_arr, ntrials, 1)
     if (mod(ntrials,2) .eq. 0) then
         iter_med  = 0.5d0 * (iter_arr(ntrials/2)  + iter_arr(ntrials/2+1))
         neval_med = 0.5d0 * (neval_arr(ntrials/2) + neval_arr(ntrials/2+1))
+        time_med  = 0.5d0 * (time_arr(ntrials/2)  + time_arr(ntrials/2+1))
     else
         iter_med  = iter_arr(ntrials/2+1)
         neval_med = neval_arr(ntrials/2+1)
+        time_med  = time_arr(ntrials/2+1)
     end if
 
     write(*,100) "esta", noutliers,"&",fovo,"&",iterations,"&",n_eval,"&",tiempo,"\\"
     100 format (A5,1X,I2,1X,A1,1X,ES10.3,1X,A1,1X,I3,1X,A1,1X,I4,1X,A1,1X,ES10.3,1X,A2)
 
-    write(*,101) "avg", noutliers,"&",iter_mean,"+-",iter_std,"&",neval_mean,"+-",neval_std,"\\"
-    101 format (A4,1X,I2,1X,A1,1X,F7.2,1X,A2,1X,F7.2,1X,A1,1X,F8.2,1X,A2,1X,F8.2,1X,A2)
+    write(*,101) "avg", noutliers,"&",iter_mean,"+-",iter_std,"&",neval_mean,"+-",neval_std,"&",time_mean,"\\"
+    101 format (A4,1X,I2,1X,A1,1X,F7.2,1X,A2,1X,F7.2,1X,A1,1X,F8.2,1X,A2,1X,F8.2,1X,A1,1X,ES10.3,1X,A2)
 
-    write(*,102) "med", noutliers,"&",iter_med,"&",neval_med,"\\"
-    102 format (A4,1X,I2,1X,A1,1X,F7.1,1X,A1,1X,F8.1,1X,A2)
+    write(*,102) "med", noutliers,"&",iter_med,"&",neval_med,"&",time_med,"\\"
+    102 format (A4,1X,I2,1X,A1,1X,F7.1,1X,A1,1X,F8.1,1X,A1,1X,ES10.3,1X,A2)
 
     ! print*, "El valor de la fovo_best es", fovo_best
     ! print*, "Solucion", xk

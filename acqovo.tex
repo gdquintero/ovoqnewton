@@ -6,7 +6,6 @@
 \usepackage{hyperref}	
 \usepackage{xcolor}	
 \usepackage{graphicx}
-\usepackage{multirow}
 
 \setlength{\textwidth}     {16.0cm}
 \setlength{\textheight}    {21.0cm}
@@ -15,39 +14,37 @@
 \setlength{\topmargin}     {-0.5cm}
 \setlength{\baselineskip}  { 0.7cm}
 
-\newcommand{\R}{\mathbb{R}}
-\newcommand{\N}{\mathbb{N}}
 \newcommand{\xkjtrial}{x^{k,j}_{\mathrm{trial}}}
 \newcommand{\minimize}{\mathop{\text{Minimize}}}
 \newcommand{\flow}{f_{\mathrm{low}}}
-\newcommand{\simplex}{\textstyle\sum}
 
 \newtheorem{theorem}{Theorem}[section]
-\newtheorem{corollary}{Corollary}[section]
-\newtheorem{lemma}{Lemma}[section]
-\newtheorem{definition}{Definition}[section]
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{definition}[theorem]{Definition}
 \newtheorem{assumption}{Assumption}
 \renewcommand\theassumption{A\arabic{assumption}}
+
+\newcounter{alg}[section]
+\renewcommand{\thealg}{\thesection.\arabic{alg}}
 
 % Show line numbers
 \usepackage[mathlines]{lineno}
 \renewcommand\linenumberfont{\normalfont\small\color{gray}}
 \linenumbers
 
-% Show labels
-\usepackage{showlabels}
 
 
 \begin{document}
 
-\title{A quasi-Newton regularized method for box-constrained order-value optimization\thanks{This work has been funded by the Vice-Rectorate for Research, Outreach and Social Projection of the University of the Atlantic through the 2022 Internal Call for Proposals to Strengthen Research Groups with Tools for Creation, Innovation, and Research.}}
+\title{A regularized Newton-type method for box-constrained order-value optimization\thanks{This work has been funded by the Vice-Rectorate for Research, Outreach and Social Projection of the University of the Atlantic through the 2022 Internal Call for Proposals to Strengthen Research Groups with Tools for Creation, Innovation, and Research.}}
 
 \author{
-    G. Q. Álvarez\thanks{Mathematics Program, Faculty of Basic Sciences, University of Atlantic, Puerto Colombia, Atlántico, Colombia. e-mail: gdquintero@uniatlantico.edu.co}
+    G. Q. Álvarez\thanks{Mathematics Program, Faculty of Basic Sciences, University of the Atlantic, Puerto Colombia, Atlántico, Colombia. e-mail: gdquintero@uniatlantico.edu.co}
     \and 
-    Carlos Araujo\thanks{Mathematics Program, Faculty of Basic Sciences, University of Atlantic, Puerto Colombia, Atlántico, Colombia. e-mail: carlosaraujo@uniatlantico.edu.co}
+    C. A. Araujo\thanks{Mathematics Program, Faculty of Basic Sciences, University of the Atlantic, Puerto Colombia, Atlántico, Colombia. e-mail: carlosaraujo@uniatlantico.edu.co}
     \and
-    M. A. C. Candezano\thanks{Mathematics Program, Faculty of Basic Sciences, University of Atlantic, Puerto Colombia, Atlántico, Colombia. e-mail: miguelcaro@uniatlantico.edu.co}
+    M. A. C. Candezano\thanks{Mathematics Program, Faculty of Basic Sciences, University of the Atlantic, Puerto Colombia, Atlántico, Colombia. e-mail: miguelcaro@uniatlantico.edu.co}
 }
 
 % \date{June 18, 2025\footnote{Revision made on \today.}}
@@ -62,25 +59,29 @@ cases $p=1$ and $p=m$, and provides a flexible tool for robust estimation, in
 which a prescribed number of outlying observations are discarded. We propose a
 regularized method for minimizing the order-value function subject to box
 constraints. At each iteration the method minimizes a strongly convex model that
-combines a piecewise-linear term built from the active gradients, a quasi-Newton
-curvature term defined by a symmetric positive semidefinite matrix, and a
-quadratic regularization; the curvature term carries second-order information
-without requiring explicit second derivatives, and a purely first-order
-regularized method is recovered as the special case in which this term vanishes.
+combines a piecewise-linear term built from the active gradients, a curvature
+term in which each active component carries its own symmetric positive
+semidefinite matrix of bounded norm, and a quadratic regularization. The
+curvature matrices are otherwise arbitrary, so that quasi-Newton updates,
+Gauss--Newton matrices and modified exact Hessians are all admissible, and a
+purely first-order regularized method is recovered as the special case in which
+they vanish.
 We introduce an approximate optimality condition for the problem and prove that
 the method is well defined and attains the same worst-case iteration- and
 evaluation-complexity bounds as its first-order counterpart, so that the
 incorporation of curvature preserves the theoretical guarantees at no additional
 order of complexity. The applicability of the method to parameter-estimation
 problems with outliers is illustrated, and the practical effect of the curvature
-is examined empirically.\\
+is examined empirically.
 
+\medskip
 \noindent
 \textbf{Keywords:} Order-value optimization, regularized models,
-quasi-Newton methods, complexity, algorithms, applications.\\
+Newton-type methods, complexity, algorithms, applications.
 
+\medskip
 \noindent
-\textbf{Mathematics Subject Classification:} 90C30, 65K05, 49M37, 90C60, 68Q25.\\
+\textbf{Mathematics Subject Classification:} 90C30, 65K05, 49M37, 90C60, 68Q25.
 \end{abstract}
 
 \section{Introduction} \label{sec:intro}
@@ -137,11 +138,14 @@ evaluation-complexity bounds for reaching an approximate optimality condition.
 In the present work we generalize the approach of \cite{alvarezovo} by
 enriching the regularized model with second-order information. At each
 iteration our method minimizes a model built from the same piecewise-linear
-convex term, a curvature term governed by a symmetric positive semidefinite
-matrix $B$, and a Tikhonov-type quadratic regularization. The matrix $B$ is
-updated in a quasi-Newton fashion and therefore requires no explicit second
-derivatives, while the regularization renders the model strongly convex, so
-that each subproblem has a unique minimizer. Setting $B=0$ recovers the
+convex term, a curvature term in which each active component $f_i$ carries its
+own symmetric positive semidefinite matrix $B_i$ of norm at most $M$, and a
+Tikhonov-type quadratic regularization. Beyond these two requirements the
+matrices $B_i$ are arbitrary: a quasi-Newton update such as BFGS or SR1, a
+Gauss--Newton matrix, or an exact component Hessian shifted to positive
+definiteness are all admissible, and the analysis is indifferent to which is
+used. The regularization renders the model strongly convex, so that each
+subproblem has a unique minimizer. Setting $B_i=0$ recovers the
 first-order method of \cite{alvarezovo} exactly, so the proposed method is a
 strict generalization of it. Curvature had already been incorporated into OVO
 by the quasi-Newton method of \cite{yano1}, which approximates the active
@@ -157,7 +161,7 @@ than asymptotic convergence rates. We derive an approximate optimality
 condition for
 the box-constrained problem and prove that the method is well defined and
 attains the \emph{same} worst-case iteration- and evaluation-complexity bounds
-as the first-order method. Thus the incorporation of curvature does not degrade
+as the first-order method (Theorem~\ref{teo:complexity}). Thus the incorporation of curvature does not degrade
 the theoretical guarantees; whether it also yields a practical advantage is a
 separate question, which we examine empirically on parameter-estimation
 problems in the presence of outliers.
@@ -175,7 +179,7 @@ Final remarks are given in Section~\ref{sec:final}.
 For $i=1,\dots,n$, $e_i\in\mathbb{R}^{n}$ denotes the $i$th column of the
 identity matrix.
 
-\section{A quasi-Newton regularized method} \label{sec:method}
+\section{A regularized Newton-type method} \label{sec:method}
 
 Let $f_i : \mathbb{R}^n \to \mathbb{R}$, $i = 1, \ldots, m$, be given and let
 $p \in \{1, \ldots, m\}$ be fixed. The \textit{order-value function of order
@@ -222,38 +226,47 @@ attain the order-value,
 
 The method builds, around a reference point $\bar{x} \in \Omega$, a local model
 of $f$ that combines the first-order information of the active components with
-curvature carried by a symmetric positive semidefinite matrix
-$B \in \mathbb{R}^{n \times n}$. In a quasi-Newton framework, $B$ is updated
-from successive gradients, so that no second derivatives are computed
-explicitly. For given $\bar{x} \in \Omega$, $B \succeq 0$, $\delta > 0$, and
-$\sigma > 0$, the regularized model is
+curvature. Each component carries its own curvature matrix: given $M > 0$, we
+call
+\begin{equation*}
+    \mathcal{B} = \{ B_i \}_{i=1}^{m}, \qquad
+    B_i \in \mathbb{R}^{n \times n} \text{ symmetric},\ B_i \succeq 0,\
+    \|B_i\| \leq M,
+\end{equation*}
+an \textit{admissible curvature family}; only those $B_i$ with
+$i \in I_\delta(\bar{x})$ enter the model below. For given $\bar{x} \in \Omega$,
+an admissible $\mathcal{B}$, $\delta \geq 0$, and $\sigma > 0$, the regularized
+model is
 \begin{equation}
-    \Psi(x; \bar{x}, B, \delta, \sigma) =
+    \Psi(x; \bar{x}, \mathcal{B}, \delta, \sigma) =
     \max_{i \in I_\delta(\bar{x})}
-    \left\lbrace \nabla f_i(\bar{x})^T(x - \bar{x}) 
-    + \frac{1}{2} \left[ (x - \bar{x})^T B (x - \bar{x})
+    \left\lbrace \nabla f_i(\bar{x})^T(x - \bar{x})
+    + \frac{1}{2} \left[ (x - \bar{x})^T B_i (x - \bar{x})
     + \sigma \|x - \bar{x}\|^2 \right]\right\rbrace. \label{model}
 \end{equation}
 The first term is the piecewise-linear convex function that captures the
 worst-case first-order behavior of $f$ over the active components; the bracket
-adds the quasi-Newton curvature $(x - \bar{x})^T B (x - \bar{x})$ and a
-Tikhonov regularization $\sigma \|x - \bar{x}\|^2$. Since $\sigma > 0$, the
-model is strongly convex even when $B$ is only positive semidefinite, so the
-subproblem \eqref{ovo-subpro} has a unique minimizer. For $B = 0$, the model
-reduces to the first-order regularized model of \cite{alvarezovo}, which the
-present method thus generalizes.
+adds the curvature $(x - \bar{x})^T B_i (x - \bar{x})$ of the $i$th component
+and a Tikhonov regularization $\sigma \|x - \bar{x}\|^2$. Each component of the
+maximum is a convex quadratic, so $\Psi$ is convex; since $\sigma > 0$ it is in
+fact strongly convex even when the $B_i$ are only positive semidefinite, and the
+subproblem \eqref{ovo-subpro} has a unique minimizer. Taking $B_i = 0$ for all
+$i$ reduces the model to the first-order regularized model of
+\cite{alvarezovo}, which the present method thus generalizes; taking a single
+matrix $B_i \equiv B$ common to all active components is the intermediate case
+in which one curvature matrix is shared.
 
 \medskip
-\noindent\textbf{Algorithm~\ref{sec:method}.1.} Let $\delta > 0$,
+\noindent\refstepcounter{alg}\label{alg:main}\textbf{Algorithm~\thealg.} Let $\delta > 0$,
 $\sigma_{\min} > 0$, $M > 0$, $\alpha \in (0,1)$, $\gamma > 1$, and
 $x^0 \in \Omega$ be given. Initialize $k \leftarrow 0$.
 \begin{description}
 \item[Step~1.] Initialize $j \leftarrow 0$ and $\sigma_{k,j} = \sigma_{\min}$.
-\item[Step~2.] Choose a symmetric positive semidefinite matrix
-$B_{k,j} \in \mathbb{R}^{n \times n}$ with $\|B_{k,j}\| \leq M$ and compute
+\item[Step~2.] Choose an admissible curvature family
+$\mathcal{B}_{k,j} = \{B_{k,j,i}\}_{i=1}^{m}$ and compute
 $\xkjtrial$ as the global minimizer of
     \begin{equation} \label{ovo-subpro}
-    \minimize_{x \in \Omega}\, \Psi(x; x^k, B_{k,j}, \delta, \sigma_{k,j}).
+    \minimize_{x \in \Omega}\, \Psi(x; x^k, \mathcal{B}_{k,j}, \delta, \sigma_{k,j}).
     \end{equation}
 \item[Step~3.] If
     \begin{equation} \label{ovo-armijo}
@@ -265,15 +278,18 @@ $j \leftarrow j + 1$, and go to Step~2.
 $j_k = j$, $k \leftarrow k+1$, and go to Step~1.
 \end{description}
 
-The bound $\|B_{k,j}\| \leq M$ keeps the curvature from dominating the model.
-The freedom in choosing $B_{k,j}$ lets the method accommodate standard
-quasi-Newton updates such as BFGS or SR1, and the choice $B_{k,j} = 0$ for all
-$k, j$ recovers the first-order method of \cite{alvarezovo}.
+The bound $\|B_{k,j,i}\| \leq M$ keeps the curvature from dominating the model.
+Positive semidefiniteness and that bound are the \emph{only} requirements: the
+freedom in choosing the $B_{k,j,i}$ lets the method accommodate standard
+quasi-Newton updates such as BFGS or SR1, Gauss--Newton matrices, and exact
+component Hessians shifted to positive definiteness, while the choice
+$B_{k,j,i} = 0$ for all $k, j, i$ recovers the first-order method of
+\cite{alvarezovo}. The analysis below is indifferent to which of these is used.
 
 The requirements on $\xkjtrial$ are mild. The theory only needs $\xkjtrial$ to
 be a stationary point of \eqref{ovo-subpro} with
-$\Psi(\xkjtrial; x^k, B_{k,j}, \delta, \sigma_{k,j}) \leq 0$; since
-$\Psi(x^k; x^k, B_{k,j}, \delta, \sigma_{k,j}) = 0$, any descent method started
+$\Psi(\xkjtrial; x^k, \mathcal{B}_{k,j}, \delta, \sigma_{k,j}) \leq 0$; since
+$\Psi(x^k; x^k, \mathcal{B}_{k,j}, \delta, \sigma_{k,j}) = 0$, any descent method started
 at $x^k$ produces such iterates. Moreover, \eqref{ovo-subpro} minimizes a
 strongly convex function over the compact convex set $\Omega$, so it has a
 unique global minimizer and every stationary point is global; the
@@ -329,43 +345,49 @@ $x^* + t(y^* - x^*) \in \Omega$, contradicting the local minimality of $x^*$.
 \end{proof}
 
 \begin{theorem} \label{teo:conv2}
-Suppose that Assumption~\ref{a1} holds and let $B \succeq 0$ and $\sigma \geq 0$.
-If $x^*$ is a local minimizer of \eqref{ovo-problem}, then it is also a local
-minimizer of $\minimize_{x \in \Omega}\, \Psi(x; x^*, B, 0, \sigma)$.
-\end{theorem}
-
-\begin{proof}
-Suppose not: there is $y^* \in \Omega$ with $\Psi(y^*; x^*, B, 0, \sigma) < 0$,
-i.e.
+Suppose that Assumption~\ref{a1} holds and let $\mathcal{B}$ be an admissible
+curvature family and $\sigma \geq 0$. If $x^*$ is a local minimizer of
+\eqref{ovo-problem}, then it is also a local minimizer of
 \[
-\max_{i \in I_0(x^*)} \{ \nabla f_i(x^*)^T(y^* - x^*) \}
-+ \tfrac{1}{2} \big[ (y^* - x^*)^T B (y^* - x^*) + \sigma \|y^* - x^*\|^2 \big]
-< 0.
+\minimize_{x \in \Omega}\, \Psi(x; x^*, \mathcal{B}, 0, \sigma).
 \]
-Since $B \succeq 0$ and $\sigma \geq 0$, the bracket is nonnegative, so
-$\max_{i \in I_0(x^*)} \{ \nabla f_i(x^*)^T(y^* - x^*) \} < 0$, that is,
-$\Psi(y^*; x^*, 0, 0, 0) < 0$, contradicting Theorem~\ref{teo:conv1}.
-\end{proof}
-
-\begin{theorem} \label{teo:conv3}
-Suppose that Assumption~\ref{a1} holds and let $B \succeq 0$ and
-$\sigma, \delta \geq 0$. If $x^*$ is a local minimizer of \eqref{ovo-problem},
-then it is also a local minimizer of
-$\minimize_{x \in \Omega}\, \Psi(x; x^*, B, \delta, \sigma)$.
 \end{theorem}
 
 \begin{proof}
 Suppose not: there is $y^* \in \Omega$ with
-$\Psi(y^*; x^*, B, \delta, \sigma) < 0$. Since
-$I_0(x^*) \subseteq I_\delta(x^*)$, we have
-$\max_{i \in I_0(x^*)}\{\cdot\} \leq \max_{i \in I_\delta(x^*)}\{\cdot\}$, hence
+$\Psi(y^*; x^*, \mathcal{B}, 0, \sigma) < 0$. Since the model is a maximum over
+$i \in I_0(x^*)$, every one of its components is negative at $y^*$:
 \[
-\max_{i \in I_0(x^*)} \{ \nabla f_i(x^*)^T(y^* - x^*) \}
-+ \tfrac{1}{2} \big[ (y^* - x^*)^T B (y^* - x^*) + \sigma \|y^* - x^*\|^2 \big]
-\leq \Psi(y^*; x^*, B, \delta, \sigma) < 0,
+\nabla f_i(x^*)^T(y^* - x^*)
++ \tfrac{1}{2} \big[ (y^* - x^*)^T B_i (y^* - x^*) + \sigma \|y^* - x^*\|^2 \big]
+< 0 \qquad \text{for all } i \in I_0(x^*).
 \]
-that is, $\Psi(y^*; x^*, B, 0, \sigma) < 0$, contradicting
-Theorem~\ref{teo:conv2}.
+Since $B_i \succeq 0$ and $\sigma \geq 0$, each bracket is nonnegative, so
+$\nabla f_i(x^*)^T(y^* - x^*) < 0$ for every $i \in I_0(x^*)$, and therefore
+$\max_{i \in I_0(x^*)} \{ \nabla f_i(x^*)^T(y^* - x^*) \} < 0$, that is,
+$\Psi(y^*; x^*, \mathcal{O}, 0, 0) < 0$, where $\mathcal{O}$ denotes the
+admissible family with $B_i = 0$ for all $i$. This contradicts
+Theorem~\ref{teo:conv1}.
+\end{proof}
+
+\begin{theorem} \label{teo:conv3}
+Suppose that Assumption~\ref{a1} holds and let $\mathcal{B}$ be an admissible
+curvature family and $\sigma, \delta \geq 0$. If $x^*$ is a local minimizer of
+\eqref{ovo-problem}, then it is also a local minimizer of
+$\minimize_{x \in \Omega}\, \Psi(x; x^*, \mathcal{B}, \delta, \sigma)$.
+\end{theorem}
+
+\begin{proof}
+Suppose not: there is $y^* \in \Omega$ with
+$\Psi(y^*; x^*, \mathcal{B}, \delta, \sigma) < 0$. Both models are maxima of the
+same family of functions, taken over $I_0(x^*)$ and over $I_\delta(x^*)$
+respectively; since $I_0(x^*) \subseteq I_\delta(x^*)$, the maximum over the
+smaller index set is no larger, so
+\[
+\Psi(y^*; x^*, \mathcal{B}, 0, \sigma)
+\leq \Psi(y^*; x^*, \mathcal{B}, \delta, \sigma) < 0,
+\]
+contradicting Theorem~\ref{teo:conv2}.
 \end{proof}
 
 Throughout, $\Sigma_q := \{ \lambda \in \mathbb{R}^q \mid
@@ -387,10 +409,11 @@ $i = 1, \ldots, n$ and
 \end{corollary}
 
 \begin{proof}
-By Theorem~\ref{teo:conv3} with $B = 0$ and $\sigma = 0$, $x^*$ minimizes
+By Theorem~\ref{teo:conv3} with $B_i = 0$ for all $i$ and $\sigma = 0$, the
+point $x^*$ minimizes
 $x \mapsto \max_{i \in I_\delta(x^*)} \{ \nabla f_i(x^*)^T(x - x^*) \}$ over
 $\Omega$. Applying the KKT conditions for the minimization of a maximum of
-differentiable functions over a box \cite[Lemma~3.1]{alvarezovo} yields
+differentiable functions over a box (Lemma~3.1 of \cite{alvarezovo}) yields
 multipliers $\mu \in \Sigma_{|I_\delta(x^*)|}$ and
 $\nu^\ell, \nu^u \in \mathbb{R}^n_+$ with the stated complementarity and
 \eqref{exact-opt}.
@@ -412,7 +435,7 @@ Condition $C_{\delta,\epsilon}$ requires the gradient combination of the active
 components, corrected by the box multipliers, to be small in norm. For
 $\epsilon = 0$ it reduces to the exact condition \eqref{exact-opt} of
 Corollary~\ref{cor:exact}. It serves as the stopping criterion for
-Algorithm~\ref{sec:method}.1.
+Algorithm~\ref{alg:main}.
 
 \begin{corollary} \label{cor:step}
 Suppose that Assumption~\ref{a1} holds. Then, for every $k$ and
@@ -421,28 +444,41 @@ $\nu^\ell, \nu^u \in \mathbb{R}^n_+$ such that
 $(\ell_i - [\xkjtrial]_i)\nu^\ell_i = ([\xkjtrial]_i - u_i)\nu^u_i = 0$ for
 $i = 1, \ldots, n$ and
 \begin{equation} \label{eqcoro1}
-\xkjtrial - x^k = \big( B_{k,j} + \sigma_{k,j} I \big)^{-1}
+\xkjtrial - x^k = \big( \bar{B}_{k,j} + \sigma_{k,j} I \big)^{-1}
 \left[ \sum_{i=1}^{n} (\nu^\ell_i - \nu^u_i) e_i
-- \sum_{i \in I_\delta(x^k)} \mu_i \nabla f_i(x^k) \right].
+- \sum_{i \in I_\delta(x^k)} \mu_i \nabla f_i(x^k) \right],
 \end{equation}
+where
+\begin{equation} \label{bbar}
+\bar{B}_{k,j} := \sum_{i \in I_\delta(x^k)} \mu_i B_{k,j,i}
+\end{equation}
+is symmetric, positive semidefinite, and satisfies
+$\|\bar{B}_{k,j}\| \leq M$.
 \end{corollary}
 
 \begin{proof}
 Subproblem \eqref{ovo-subpro} minimizes the strongly convex function
-$\Psi(\cdot\,; x^k, B_{k,j}, \delta, \sigma_{k,j})$ over the box $\Omega$. By
+$\Psi(\cdot\,; x^k, \mathcal{B}_{k,j}, \delta, \sigma_{k,j})$ over the box
+$\Omega$. By
 the KKT conditions for a maximum of differentiable functions over a box
-\cite[Lemma~3.1]{alvarezovo}, there exist $\mu \in \Sigma_{|I_\delta(x^k)|}$ and
+(Lemma~3.1 of \cite{alvarezovo}), there exist $\mu \in \Sigma_{|I_\delta(x^k)|}$ and
 $\nu^\ell, \nu^u \in \mathbb{R}^n_+$ with the stated complementarity such that
 \[
 \sum_{i \in I_\delta(x^k)} \mu_i
-\big[ \nabla f_i(x^k) + (B_{k,j} + \sigma_{k,j} I)(\xkjtrial - x^k) \big]
+\big[ \nabla f_i(x^k) + (B_{k,j,i} + \sigma_{k,j} I)(\xkjtrial - x^k) \big]
 + \sum_{i=1}^n (\nu^u_i - \nu^\ell_i) e_i = 0,
 \]
-where $\nabla f_i(x^k) + (B_{k,j} + \sigma_{k,j} I)(\xkjtrial - x^k)$ is the
+where $\nabla f_i(x^k) + (B_{k,j,i} + \sigma_{k,j} I)(\xkjtrial - x^k)$ is the
 gradient at $\xkjtrial$ of the $i$th component of $\Psi$. Since
-$\sum_i \mu_i = 1$, the curvature term factors out; as $\sigma_{k,j} > 0$ and
-$B_{k,j} \succeq 0$, the matrix $B_{k,j} + \sigma_{k,j} I$ is positive definite,
-and solving for $\xkjtrial - x^k$ gives \eqref{eqcoro1}.
+$\sum_i \mu_i = 1$, the terms involving $\sigma_{k,j}$ collect into
+$\sigma_{k,j}(\xkjtrial - x^k)$ and those involving the curvature into
+$\bar{B}_{k,j}(\xkjtrial - x^k)$ with $\bar{B}_{k,j}$ given by \eqref{bbar}.
+Being a convex combination of symmetric positive semidefinite matrices,
+$\bar{B}_{k,j}$ is itself symmetric and positive semidefinite, and
+$\|\bar{B}_{k,j}\| \leq \sum_{i \in I_\delta(x^k)} \mu_i \|B_{k,j,i}\| \leq M$.
+As $\sigma_{k,j} > 0$ and $\bar{B}_{k,j} \succeq 0$, the matrix
+$\bar{B}_{k,j} + \sigma_{k,j} I$ is positive definite, and solving for
+$\xkjtrial - x^k$ gives \eqref{eqcoro1}.
 \end{proof}
 
 \begin{assumption} \label{a2}
@@ -465,10 +501,11 @@ for all $i = 1, \ldots, m$ and all $x \in \Omega$.
 
 Assumption~\ref{a3} holds automatically under Assumption~\ref{a1}, since
 $\Omega$ is bounded. Combining Corollary~\ref{cor:step} with
-Assumptions~\ref{a2} and~\ref{a3} bounds the step. Since $B_{k,j} \succeq 0$,
-the eigenvalues of $B_{k,j} + \sigma_{k,j} I$ are at least $\sigma_{k,j}$, so
-$\|(B_{k,j} + \sigma_{k,j} I)^{-1}\| \leq 1/\sigma_{k,j}$, and \eqref{eqcoro1}
-gives
+Assumptions~\ref{a2} and~\ref{a3} bounds the step. Since
+$\bar{B}_{k,j} \succeq 0$, the eigenvalues of
+$\bar{B}_{k,j} + \sigma_{k,j} I$ are at least $\sigma_{k,j}$, so
+$\|(\bar{B}_{k,j} + \sigma_{k,j} I)^{-1}\| \leq 1/\sigma_{k,j}$, and
+\eqref{eqcoro1} gives
 \[
 \|\xkjtrial - x^k\| \leq \frac{1}{\sigma_{k,j}}
 \left( \sum_{i=1}^n |\nu^\ell_i - \nu^u_i|
@@ -507,7 +544,7 @@ $\{1, \ldots, r\}$. Then $b_{i_q} \leq a_q - \beta$ for $q = 1, \ldots, r$.
 \end{lemma}
 
 \begin{proof}
-See \cite[Lemma~2.1]{dunder1}.
+See Lemma~2.1 of \cite{dunder1}.
 \end{proof}
 
 The next result gives a threshold on $\sigma_{k,j}$ beyond which the trial point
@@ -533,19 +570,21 @@ f_i(\xkjtrial)
 + \tfrac{L}{2}\|\xkjtrial - x^k\|^2 \\
 &\leq f_i(x^k) + \nabla f_i(x^k)^T(\xkjtrial - x^k)
 + \Big( \tfrac{\sigma_{k,j}}{2} - \alpha \Big) \|\xkjtrial - x^k\|^2 \\
-&= f_i(x^k) + \nabla f_i(x^k)^T(\xkjtrial - x^k)
-+ \tfrac{1}{2} \big[ (\xkjtrial - x^k)^T B_{k,j} (\xkjtrial - x^k)
+&= f_i(x^k) + \nabla f_i(x^k)^T(\xkjtrial - x^k) \\
+&\quad + \tfrac{1}{2} \big[ (\xkjtrial - x^k)^T B_{k,j,i} (\xkjtrial - x^k)
 + \sigma_{k,j}\|\xkjtrial - x^k\|^2 \big] \\
 &\quad - \alpha \|\xkjtrial - x^k\|^2
-- \tfrac{1}{2}(\xkjtrial - x^k)^T B_{k,j} (\xkjtrial - x^k).
+- \tfrac{1}{2}(\xkjtrial - x^k)^T B_{k,j,i} (\xkjtrial - x^k).
 \end{align*}
-Since $B_{k,j} \succeq 0$, the last term is nonpositive and may be dropped. For
+Since $B_{k,j,i} \succeq 0$, the last term is nonpositive and may be dropped. For
 $i \in I_\delta(x^k)$, the minimizer property
-$\Psi(\xkjtrial; x^k, B_{k,j}, \delta, \sigma_{k,j}) \leq
-\Psi(x^k; x^k, B_{k,j}, \delta, \sigma_{k,j}) = 0$ gives
+$\Psi(\xkjtrial; x^k, \mathcal{B}_{k,j}, \delta, \sigma_{k,j}) \leq
+\Psi(x^k; x^k, \mathcal{B}_{k,j}, \delta, \sigma_{k,j}) = 0$ gives, since the
+model is a maximum over $I_\delta(x^k)$ and therefore bounds each of its
+components,
 \[
 \nabla f_i(x^k)^T(\xkjtrial - x^k)
-+ \tfrac{1}{2} \big[ (\xkjtrial - x^k)^T B_{k,j} (\xkjtrial - x^k)
++ \tfrac{1}{2} \big[ (\xkjtrial - x^k)^T B_{k,j,i} (\xkjtrial - x^k)
 + \sigma_{k,j}\|\xkjtrial - x^k\|^2 \big] \leq 0,
 \]
 so that
@@ -585,7 +624,7 @@ which is \eqref{ovo-armijo}.
 \end{proof}
 
 The inner loop thus terminates finitely at every outer iteration. The curvature
-affects only the constants below ---through the bound $M$ on $\|B_{k,j}\|$--- and
+affects only the constants below ---through the bound $M$ on $\|B_{k,j,i}\|$--- and
 not the $O(\delta^{-2}\epsilon^{-2})$ iteration order, which coincides with that
 of the first-order method \cite{alvarezovo}.
 
@@ -617,20 +656,21 @@ $\lfloor 1 + \log_\gamma(\sigma_k/\sigma_{\min}) \rfloor$ increases occur before
 \eqref{este} holds, after which \eqref{ovo-armijo} is satisfied.
 
 Let $K$ be the set of outer indices $k$ at which $C_{\delta,\epsilon}$ fails at
-$x^{k+1}$. Fix $k \in K$ and write $B_k = B_{k,j_k}$. By
+$x^{k+1}$. Fix $k \in K$ and write $\bar{B}_k = \bar{B}_{k,j_k}$, the convex
+combination \eqref{bbar} associated with the accepted trial point. By
 Corollary~\ref{cor:step},
-$(B_k + \sigma_k I)(x^{k+1} - x^k)
+$(\bar{B}_k + \sigma_k I)(x^{k+1} - x^k)
 = \sum_{i=1}^n (\nu^\ell_i - \nu^u_i) e_i
 - \sum_{i \in I_\delta(x^k)} \mu_i \nabla f_i(x^k)$, hence
 \[
-\big\| (B_k + \sigma_k I)(x^{k+1} - x^k) \big\|
+\big\| (\bar{B}_k + \sigma_k I)(x^{k+1} - x^k) \big\|
 = \Big\| \sum_{i \in I_\delta(x^k)} \mu_i \nabla f_i(x^k)
 + \sum_{i=1}^n (\nu^u_i - \nu^\ell_i) e_i \Big\| > \epsilon,
 \]
 the inequality holding because $C_{\delta,\epsilon}$ fails at $x^{k+1}$. Since
-$\|B_k\| \leq M$,
+$\|\bar{B}_k\| \leq M$ by Corollary~\ref{cor:step},
 \[
-\epsilon < \| (B_k + \sigma_k I)(x^{k+1} - x^k) \|
+\epsilon < \| (\bar{B}_k + \sigma_k I)(x^{k+1} - x^k) \|
 \leq (M + \sigma_k) \|x^{k+1} - x^k\|,
 \]
 and with \eqref{cota-sigma},
@@ -662,25 +702,44 @@ discarding the $o$ worst. Since the true number of outliers is unknown, we
 solve a sequence of OVO problems with increasing $o$; a sharp drop in $f(x^*)$
 identifies the number of outliers present.
 
-Our aim is to assess the effect of the curvature matrix $B$. We therefore
-compare two instances of Algorithm~\ref{sec:method}.1 that differ \emph{only}
-in $B$: the first-order method ($B_{k,j}=0$, which coincides with
-\cite{alvarezovo}) and the quasi-Newton variant, in which $B_{k,j}$ is built
-from the Gauss--Newton curvature of the active component. For the least-squares
-functions above, $\nabla f_i(x)=r_i(x)\nabla r_i(x)$ with
-$r_i(x)=y(t_i,x)-y_i$, so the Gauss--Newton curvature
-$\nabla r_i(x)\nabla r_i(x)^T\succeq0$ is available from quantities already
-computed for the model and requires no second derivatives. To respect the
-bound $\|B_{k,j}\|\le M$ of Step~2, we scale the curvature so that its spectral
-norm does not exceed $M$; like $\delta$, the value of $M$ is chosen by trial
-and error.
+Our aim is to assess the effect of the curvature. We therefore compare two
+instances of Algorithm~\ref{alg:main} that differ \emph{only} in the curvature
+family: the first-order method ($B_{k,j,i}=0$ for all $i$, which coincides with
+\cite{alvarezovo}) and a second-order variant, in which each active component
+contributes its own matrix. For the least-squares functions above,
+$\nabla f_i(x)=r_i(x)\nabla r_i(x)$ and
+\[
+\nabla^2 f_i(x)=\nabla r_i(x)\nabla r_i(x)^T + r_i(x)\nabla^2 r_i(x),
+\qquad r_i(x)=y(t_i,x)-y_i .
+\]
+We take $B_{k,j,i}$ to be the exact component Hessian $\nabla^2 f_i(x^k)$,
+made positive definite by the shift
+\begin{equation} \label{shift}
+B_{k,j,i} \leftarrow \nabla^2 f_i(x^k)
++ \max\big\{0,\ -\lambda_{\min}\big(\nabla^2 f_i(x^k)\big) + \tau \big\}\, I,
+\qquad \tau = 10^{-8},
+\end{equation}
+and then rescaled by $M/\lambda_{\max}(B_{k,j,i})$ whenever
+$\lambda_{\max}(B_{k,j,i}) > M$, so that the requirements $B_{k,j,i}\succeq0$
+and $\|B_{k,j,i}\|\le M$ of Step~2 hold. The eigenvalues are computed with the
+LAPACK routine \texttt{DSYEV}. For the model of Section~\ref{subsec:poly},
+which is affine in the parameters, $\nabla^2 r_i=0$ and the component Hessian
+reduces to the constant Gauss--Newton matrix $\nabla r_i\nabla r_i^T$, already
+positive semidefinite, so the shift in \eqref{shift} is inactive up to $\tau$;
+for the nonlinear model of Section~\ref{subsec:bard} the term
+$r_i\nabla^2 r_i$ is present, the component Hessians are indefinite in general,
+and the shift is genuinely active. Quasi-Newton updates such as BFGS or SR1 are
+equally admissible in Step~2; we use exact Hessians here because $\nabla^2 r_i$
+is available in closed form for both test problems, which isolates the effect
+of the curvature itself from that of any approximation to it. Like $\delta$,
+the value of $M$ is chosen by trial and error.
 
 As in \cite{alvarezovo}, subproblem \eqref{ovo-subpro} is reformulated as the
 smooth nonlinear program
 \[
 \minimize_{x\in\Omega,\,w}\ w \quad\text{s.t.}\quad
 \nabla f_i(x^k)^T(x-x^k)
-+\tfrac12\big[(x-x^k)^TB_{k,j}(x-x^k)+\sigma_{k,j}\|x-x^k\|^2\big]\le w,
++\tfrac12\big[(x-x^k)^TB_{k,j,i}(x-x^k)+\sigma_{k,j}\|x-x^k\|^2\big]\le w,
 \quad i\in I_\delta(x^k),
 \]
 solved with Algencan \cite{bmbook,bmcomper}, whose multipliers furnish
@@ -692,7 +751,7 @@ that any difference is attributable to $B$.
 The codes were implemented in Fortran 90. Tests were conducted on a computer
 with a 13th-generation Intel Core i7-13700KF processor (up to $5.4$\,GHz) and
 $32$\,GB $4800$\,MT/s DDR5 RAM,
-running Linux (Arch Linux, kernel 7.0.10). Code was compiled by the GNU Fortran
+running Linux (Arch Linux, kernel 7.1.4). Code was compiled by the GNU Fortran
 compiler (version 16.1.1) with the \texttt{-O3} optimization directive enabled.
 
 \subsection{A model linear in the parameters} \label{subsec:poly}
@@ -712,19 +771,19 @@ $f(x^*)$ over the $100$ starting points, the iterations and evaluations of the
 single run that attained it, and the mean and median iterations and evaluations
 over all $100$ runs. Both methods identify the $10$ outliers
 through the sharp drop of $f(x^*)$ between $o=9$ and $o=10$, and return solutions
-of the same quality. The ``best run'' counts are a single, point-initialisation
-dependent sample and are reported only to show at what cost that particular
-solution was reached; the fair cost comparison is the mean and median over all
+of the same quality. The ``best run'' counts are a single sample that depends on
+the particular starting point, and are reported only to show at what cost that
+particular solution was reached; the fair cost comparison is the mean and median over all
 $100$ runs, on which the two methods are essentially identical. Summing over $o$
 the per-$o$ means reported in
 Table~\ref{tab:poly} gives $368$ iterations and $1836$ evaluations for the
-first-order method against $369$ and $1858$ for the quasi-Newton variant; the
+first-order method against $369$ and $1858$ for the second-order variant; the
 corresponding sums of the per-$o$ medians (the median columns of the table)
-agree just as closely, $350$ and $1760$ against $352$ and $1792$. The two methods thus
+agree just as closely, $350.0$ and $1760.5$ against $352.5$ and $1792.0$. The two methods thus
 differ only within the run-to-run variability of the multistart
-procedure. This is expected: on this affine model the Gauss--Newton curvature
-coincides with the exact, constant Hessian, so the explicit curvature term is
-redundant and $B$ has no discernible effect.
+procedure. This is expected: on this affine model the component Hessians are
+constant and already positive semidefinite, so the explicit curvature term is
+redundant and the matrices $B_{k,j,i}$ have no discernible effect.
 
 \begin{table}[ht!]
 \centering
@@ -732,7 +791,7 @@ redundant and $B$ has no discernible effect.
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{c ccc cc cc ccc cc cc}
 \hline
- & \multicolumn{7}{c}{First-order ($B=0$)} & \multicolumn{7}{c}{Quasi-Newton ($M=1$)} \\
+ & \multicolumn{7}{c}{First-order ($B=0$)} & \multicolumn{7}{c}{Second-order ($M=1$)} \\
 \cline{2-8}\cline{9-15}
  & \multicolumn{3}{c}{best run} & \multicolumn{2}{c}{\#it} & \multicolumn{2}{c}{\#fcnt}
  & \multicolumn{3}{c}{best run} & \multicolumn{2}{c}{\#it} & \multicolumn{2}{c}{\#fcnt} \\
@@ -759,7 +818,7 @@ $\Sigma$ & & 449 & 2272 & 368 & 350.0 & 1836 & 1760.5 & & 386 & 1868 & 369 & 352
 \end{tabular}%
 }
 \caption{Third-degree polynomial ($m=46$, $\delta=0.1$): first-order method
-($B=0$) versus the quasi-Newton variant ($M=1$). For each $o$, the ``best run''
+($B=0$) versus the second-order variant ($M=1$). For each $o$, the ``best run''
 block reports the best $f(x^*)$ over $100$ starting points together with the
 outer iterations (\#it) and function evaluations (\#fcnt) of the single run that
 attained it; the remaining columns give the mean and median \#it and \#fcnt over
@@ -770,8 +829,9 @@ all $100$ starting points. The $\Sigma$ row sums each count over $o$.}
 The absence of any gain from curvature on this problem is expected, and
 instructive. The model $y(t,x)$ is affine in the parameters $x$, so each
 residual $r_i$ is affine, $\nabla r_i$ is constant, and the component Hessians
-$\nabla^2 f_i=\nabla r_i\nabla r_i^T$ are constant and exact: here the
-Gauss--Newton curvature is the true curvature. Each $f_i$ is thus a convex
+$\nabla^2 f_i=\nabla r_i\nabla r_i^T$ are constant and positive semidefinite:
+here the Gauss--Newton matrix \emph{is} the exact Hessian, and the shift
+\eqref{shift} does nothing. Each $f_i$ is thus a convex
 quadratic, for which the adaptive regularization $\sigma_{k,j}$ of the
 first-order model already produces well-scaled steps; the explicit curvature is
 largely redundant and merely reshapes the step without reducing the iteration
@@ -779,8 +839,8 @@ count. Moreover, the dominant difficulty of \eqref{ovo-problem} on this
 instance is not smooth nonconvexity --which curvature would mitigate-- but the
 combinatorial selection of which observations to discard, which produces the
 many local minima reflected in the multistart strategy and is unaffected by
-$B$. This is consistent with the analysis of Section~\ref{sec:complexity},
-where $B$ enters only the constant, and not the order, of the complexity
+the curvature. This is consistent with the analysis of Section~\ref{sec:complexity},
+where the curvature enters only the constant, and not the order, of the complexity
 bounds: on a problem of this type curvature can be expected to neither help nor
 harm. We turn next to a model that is genuinely nonlinear in the parameters, where
 the first-order model is a poorer local approximation, to examine whether the
@@ -799,7 +859,9 @@ data set of \cite{mgh} consists of $m_0 = 15$ observations at $t_i = i$,
 $i = 1, \dots, 15$. The model is nonlinear in $x_2$ and $x_3$, which
 enter through the denominator, so the component Hessians
 $\nabla^2 f_i = \nabla r_i \nabla r_i^T + r_i \nabla^2 r_i$ are no longer
-constant and the Gauss--Newton term carries genuine curvature information. We
+constant, the second term does not vanish, and the curvature matrices carry
+genuine point-dependent information; the shift \eqref{shift} is active
+whenever $\nabla^2 f_i(x^k)$ is indefinite. We
 take the box $x_1 \in [-10, 10]$, $x_2, x_3 \in [0.1, 10]$; the lower bounds on
 $x_2, x_3$ keep the denominator in \eqref{bard-model} positive and exclude the
 spurious minimizer of the Bard function at $(0.8406\ldots, -\infty, -\infty)$.
@@ -820,9 +882,13 @@ and then drops by more than two orders of magnitude between $o = 3$ and $o = 4$,
 after which it remains negligible (Figure~\ref{fig:bard}(b)). Both methods exhibit the same drop at $o = 4$
 and both identify exactly the four added outliers. For $o \le 3$ they return
 essentially identical values of $f(x^*)$; for $o \ge 4$, once the outliers are
-removed, both reduce $f(x^*)$ to the residual floor of the clean data, the
-first-order method reaching marginally lower values there, within the
-variability of the multistart procedure. Figure~\ref{fig:bard}(a) shows the fit
+removed, both reduce $f(x^*)$ to the residual floor of the clean data, several
+orders of magnitude below the plateau, with the first-order method reaching the
+lower values there --- by a factor of about $15$ at $o = 6$
+($6.3\times10^{-5}$ against $9.5\times10^{-4}$). At that scale both variants
+have already discarded the four outliers and fit the clean data, and the
+remaining gap reflects which local minimizer the multistart happened to reach
+rather than a systematic difference in accuracy. Figure~\ref{fig:bard}(a) shows the fit
 obtained at $o = 4$: the model follows the fifteen clean observations while the
 four outliers, marked with circles, are discarded.
 
@@ -831,7 +897,7 @@ four outliers, marked with circles, are discarded.
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{c ccc cc cc ccc cc cc}
 \hline
- & \multicolumn{7}{c}{First-order ($B=0$)} & \multicolumn{7}{c}{Quasi-Newton ($M=1$)} \\
+ & \multicolumn{7}{c}{First-order ($B=0$)} & \multicolumn{7}{c}{Second-order ($M=1$)} \\
 \cline{2-8}\cline{9-15}
  & \multicolumn{3}{c}{best run} & \multicolumn{2}{c}{\#it} & \multicolumn{2}{c}{\#fcnt}
  & \multicolumn{3}{c}{best run} & \multicolumn{2}{c}{\#it} & \multicolumn{2}{c}{\#fcnt} \\
@@ -853,7 +919,7 @@ $\Sigma$ & & 413 & 534 & 593 & 406.0 & 678 & 500.0 & & 436 & 517 & 513 & 435.5 &
 }
 \caption{Bard function ($m=19$, $\delta=0.1$) with four added outliers,
 two above and two below the model curve: first-order method ($B=0$) versus the
-quasi-Newton variant ($M=1$). For each $o$, the ``best run'' block reports the
+second-order variant ($M=1$). For each $o$, the ``best run'' block reports the
 best $f(x^*)$ over $100$ starting points together with the outer iterations
 (\#it) and function evaluations (\#fcnt) of the single run that attained it; the
 remaining columns give the mean and median \#it and \#fcnt over all $100$
@@ -882,58 +948,207 @@ $o = 0$---the minimax over all $m = 19$ observations, outliers included---a hard
 nonconvex problem where both methods are expensive (about $360$--$400$ mean
 iterations) and the first-order method is in fact slightly cheaper. Once at
 least the outliers are being discarded ($o \ge 1$), the regime for which the
-method is intended, the quasi-Newton variant is consistently more efficient.
+method is intended, the second-order variant is more efficient in aggregate. The
+comparison is not uniform row by row: the first-order method has the lower mean
+iteration count at $o = 2$ and $o = 6$, the lower mean evaluation count at
+$o = 2$, and the lower median iteration count at $o = 5$ and $o = 6$. The one
+metric that favors the second-order variant at every $o \ge 1$ is the median
+evaluation count.
 Summing the per-$o$ means of Table~\ref{tab:bard} over $o = 1, \dots, 6$ gives
 $232$ iterations and $296$ evaluations for the first-order method against $114$
-and $160$ for the quasi-Newton variant; the corresponding sums of the per-$o$
+and $160$ for the second-order variant; the corresponding sums of the per-$o$
 medians are $43.5$ and $115$ against $38$ and $83$. The mean gap is large---the
 first-order method uses about twice as many iterations and evaluations---but is
 amplified by a heavy tail of slow first-order runs on the hardest instances (at
 $o = 1$ the mean iteration count is $152$ for the first-order method against
-$39$ for the quasi-Newton variant), which the curvature mitigates. The median,
-robust to this tail, still favours the quasi-Newton variant, though more
-modestly. Either way, in this regime the curvature lowers the cost.
+$39$ for the second-order variant), which the curvature mitigates. The median,
+robust to this tail, still favors the second-order variant, though far more
+modestly. Either way, in aggregate over this regime the curvature lowers the
+cost.
 
 Curvature thus helps precisely where the first-order model is a poor local
 approximation---a nonlinear model with outliers still present---while it neither
 helps on the affine model of Section~\ref{subsec:poly} nor on the full-data
 minimax at $o = 0$. This is consistent with the analysis of
-Section~\ref{sec:complexity}, where $B$ affects only the constants of the
+Section~\ref{sec:complexity}, where the curvature affects only the constants of the
 complexity bounds: the gain is a constant-factor one, realized here in the
-outlier-rich regime, not a change in the order. Two caveats temper it. The
-evaluation count does not reflect the extra per-iteration work of assembling and
-spectrally processing the curvature matrix, so the wall-clock benefit is smaller
-than the counts suggest; and once the outliers are removed ($o \ge 4$) both
+outlier-rich regime, not a change in the order. One caveat tempers it: once the
+outliers are removed ($o \ge 4$) both
 methods reach the residual floor of the clean data, where the first-order
-variant attains marginally lower $f(x^*)$ values, within the multistart
-variability.
+variant attains the lower $f(x^*)$ values, by up to an order of magnitude at
+$o = 6$. A second caveat, the per-iteration cost of the curvature, is examined
+next.
+
+\subsection{Computational cost} \label{subsec:time}
+
+Iteration and evaluation counts do not reflect the extra work the second-order
+variant performs at every iteration: for each active component it assembles the
+Hessian $\nabla^2 f_i(x^k)$, diagonalizes it, applies the shift \eqref{shift}
+and rescales it, at a cost of one \texttt{DSYEV} call per index in
+$I_\delta(x^k)$. Table~\ref{tab:time} therefore reports CPU times, measured with
+the Fortran intrinsic \texttt{cpu\_time} around the call to the algorithm and
+aggregated in the same way as the counts: for each $o$ we take the mean and the
+median over the $100$ starting points, and the table sums those per-$o$ values
+over the sweep.
+
+\begin{table}[ht!]
+\centering
+\begin{tabular}{l cc cc cc}
+\hline
+ & \multicolumn{2}{c}{First-order ($B=0$)}
+ & \multicolumn{2}{c}{Second-order ($M=1$)}
+ & \multicolumn{2}{c}{ratio} \\
+\cline{2-3}\cline{4-5}\cline{6-7}
+ & mean & median & mean & median & mean & median \\
+\hline
+Polynomial, $o=0,\dots,12$
+  & $115.7$ & $110.0$ & $158.9$ & $146.3$ & $1.37$ & $1.33$ \\
+Bard, $o=0,\dots,6$
+  & $62.2$  & $38.0$  & $51.4$  & $33.8$  & $0.83$ & $0.89$ \\
+Bard, $o=1,\dots,6$
+  & $35.1$  & $11.0$  & $29.2$  & $11.7$  & $0.83$ & $1.06$ \\
+\hline
+\end{tabular}
+\caption{CPU time in milliseconds for the polynomial of
+Section~\ref{subsec:poly} and the Bard function of Section~\ref{subsec:bard},
+summed over the sweep in $o$. For each $o$
+the mean and median over the $100$ starting points are taken, as in
+Tables~\ref{tab:poly} and~\ref{tab:bard}, and those values are then summed. The
+ratio columns give second-order over first-order, so that values below $1$
+favour the second-order variant.}
+\label{tab:time}
+\end{table}
+
+The two problems behave in opposite ways, and both are informative. On the
+polynomial, where the counts were indistinguishable, the second-order variant
+costs $37\%$ more time in the mean and $33\%$ more in the median: with nothing
+to gain from the curvature, its assembly and diagonalization are pure overhead.
+This quantifies the redundancy diagnosed in Section~\ref{subsec:poly}. On the
+Bard problem the iteration savings more than pay for that overhead, and the
+second-order variant is $17\%$ faster in the mean, both over the whole sweep and
+over the regime $o \ge 1$. The medians again temper the conclusion: over the
+whole sweep the second-order variant is $11\%$ faster, but restricted to
+$o \ge 1$ it is $6\%$ \emph{slower}, because there the typical run of either
+method terminates in a handful of iterations and the per-iteration overhead is
+no longer amortized. The wall-clock advantage is therefore real but smaller than
+the roughly twofold gap in mean iteration counts suggests, and it is confined to
+the nonlinear problem.
+
+We note that these times are of the order of tens of milliseconds and, being
+averages over $100$ runs of a single sweep, carry some machine noise; the
+ratios, not the absolute values, are the meaningful quantity.
+
+\subsection{Sensitivity to $\delta$ and $\sigma_{\min}$} \label{subsec:sens}
+
+The band half-width $\delta$ and the initial regularization $\sigma_{\min}$ are
+chosen by trial and error, so it is natural to ask how much of the above depends
+on that choice. We repeated the Bard experiment of Section~\ref{subsec:bard} for
+every combination of $\delta \in \{10^{-1},10^{-2},10^{-3},10^{-4}\}$ and
+$\sigma_{\min} \in \{10^{-1},10^{-2},10^{-3}\}$, with $\gamma$, $\alpha$,
+$\epsilon$, $M$ and the $100$ starting points unchanged, and with both methods.
+Table~\ref{tab:sens} collects the results.
+
+\begin{table}[ht!]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{cc ccc cc cc}
+\hline
+ & & & &
+ & \multicolumn{2}{c}{First-order ($B=0$)}
+ & \multicolumn{2}{c}{Second-order ($M=1$)} \\
+\cline{6-7}\cline{8-9}
+$\delta$ & $\sigma_{\min}$ & $f(x^*)$ at $o=3$ & $f(x^*)$ at $o=4$ & drop
+ & \#it & \#fcnt & \#it & \#fcnt \\
+\hline
+$10^{-1}$ & $10^{-1}$ & 3.511e-01 & 2.086e-03 & $168\times$ & 232 &  295 & 115 &  160 \\
+$10^{-1}$ & $10^{-2}$ & 3.536e-01 & 1.591e-03 & $222\times$ &  54 &  174 &  46 &  130 \\
+$10^{-1}$ & $10^{-3}$ & 3.493e-01 & 1.813e-03 & $193\times$ &  36 &  182 &  43 &  158 \\
+$10^{-2}$ & $10^{-1}$ & 3.491e-01 & 1.783e-03 & $196\times$ & 258 &  413 & 170 &  285 \\
+$10^{-2}$ & $10^{-2}$ & 3.489e-01 & 1.350e-03 & $258\times$ &  83 &  340 &  74 &  281 \\
+$10^{-2}$ & $10^{-3}$ & 3.489e-01 & 1.386e-03 & $252\times$ &  65 &  387 &  76 &  340 \\
+$10^{-3}$ & $10^{-1}$ & 3.487e-01 & 1.327e-03 & $263\times$ & 332 &  684 & 242 &  523 \\
+$10^{-3}$ & $10^{-2}$ & 3.488e-01 & 1.338e-03 & $261\times$ & 148 &  694 & 121 &  551 \\
+$10^{-3}$ & $10^{-3}$ & 3.488e-01 & 1.329e-03 & $262\times$ & 110 &  726 & 119 &  639 \\
+$10^{-4}$ & $10^{-1}$ & 3.487e-01 & 1.304e-03 & $267\times$ & 427 & 1158 & 372 &  978 \\
+$10^{-4}$ & $10^{-2}$ & 3.487e-01 & 1.291e-03 & $270\times$ & 219 & 1249 & 178 &  939 \\
+$10^{-4}$ & $10^{-3}$ & 3.487e-01 & 1.293e-03 & $270\times$ & 171 & 1286 & 177 & 1168 \\
+\hline
+\end{tabular}%
+}
+\caption{Sensitivity of the Bard experiment to $\delta$ and $\sigma_{\min}$.
+The values of $f(x^*)$ and the drop factor between $o=3$ and $o=4$ are those of
+the first-order method; the second-order variant agrees with them to within the
+multistart variability. The count columns give the mean \#it and \#fcnt over the
+$100$ starting points, summed over $o=1,\dots,6$. In all $24$ runs the $o=4$
+solution identified exactly the four added outliers.}
+\label{tab:sens}
+\end{table}
+
+Three things are stable across the table. The four outliers are identified
+exactly in every one of the $24$ runs. The drop in $f(x^*)$ between $o=3$ and
+$o=4$ is never smaller than two orders of magnitude, ranging from $168\times$ to
+$270\times$. And the value of $f(x^*)$ at the plateau and at the floor varies
+only in the third significant digit. The identification of the outliers, which
+is what the method is used for, is therefore not an artefact of the particular
+$\delta$ and $\sigma_{\min}$ reported in Section~\ref{subsec:bard}.
+
+The counts, by contrast, do depend on the parameters, and in a way the analysis
+anticipates. Decreasing $\delta$ raises the evaluation count steeply---from
+about $300$ at $\delta=10^{-1}$ to about $1200$ at $\delta=10^{-4}$ for the
+first-order method---which is consistent with the threshold
+$9c_x^2/(2\delta)$ of Theorem~\ref{teo:suff-descent}: a narrower band forces a
+larger $\sigma_{k,j}$, hence more rejected trial points per iteration. The
+effect of $\sigma_{\min}$ is the opposite and milder, a smaller initial
+regularization allowing longer early steps. Notably, the setting
+$\delta=\sigma_{\min}=10^{-1}$ used in Section~\ref{subsec:bard}, inherited from
+\cite{alvarezovo}, is the one with the largest iteration count in the table; we
+keep it so that a single parameter set is used throughout the paper and the
+comparison with the first-order method is made on its own terms.
+
+The comparison between the two methods is likewise stable. The second-order
+variant has the lower mean evaluation count in \emph{all twelve} parameter
+combinations, and the lower mean iteration count in eight of the twelve; the
+four exceptions all occur at the smallest value $\sigma_{\min}=10^{-3}$, and in
+each of them the evaluation count still favours the second-order variant. The
+advantage reported in Section~\ref{subsec:bard} is thus not an artefact of the
+parameter choice either, though its size clearly is.
 
 \section{Final remarks} \label{sec:final}
 
 We have extended the first-order regularized method of \cite{alvarezovo} for
-box-constrained order-value optimization by enriching its model with
-quasi-Newton curvature. The resulting method is well defined and, under the same
+box-constrained order-value optimization by enriching its model with curvature,
+each active component carrying its own positive semidefinite matrix of norm at
+most $M$. The resulting method is well defined and, under the same
 assumptions, attains the same worst-case iteration- and evaluation-complexity
-bounds as its first-order counterpart, of which it is a strict generalization.
-The curvature is thus accommodated at no cost in the theoretical guarantees, and
-standard quasi-Newton updates such as BFGS or SR1 fit directly into the
-framework.
+bounds as its first-order counterpart (Theorem~\ref{teo:complexity}), of which it
+is a strict generalization. The curvature is thus accommodated at no cost in the
+theoretical guarantees. Positive semidefiniteness and the bound $M$ are the only
+requirements imposed on the matrices, so quasi-Newton updates such as BFGS or
+SR1, Gauss--Newton matrices and shifted exact Hessians all fit directly into the
+framework; only the convex combination of the active matrices enters the
+analysis, through Corollary~\ref{cor:step}.
 
 The numerical experiments delineate where the curvature helps and where it does
-not. On the affine model the Gauss--Newton curvature is exact but redundant, and
-the two variants are indistinguishable. On the nonlinear model the picture
+not. On the affine model the component Hessians are constant and the curvature
+is exact but redundant, and the two variants are indistinguishable. On the nonlinear model the picture
 depends on the regime: for the full-data minimax the curvature does not help,
 but once outliers are being discarded---the regime for which order-value
-optimization is intended---the quasi-Newton variant is consistently more
-efficient, reducing both the mean and the median iteration and evaluation counts
-and, in particular, curbing a heavy tail of slow first-order runs on the hardest
-instances. The advantage is a constant-factor one, realized where the
+optimization is intended---the second-order variant is the more efficient of the
+two, reducing both the mean and the median iteration and evaluation counts
+aggregated over that regime and, in particular, curbing a heavy tail of slow
+first-order runs on the hardest instances. The advantage is a constant-factor one, realized where the
 first-order model is a poor local approximation, and is consistent with the
-complexity analysis, in which $B$ enters only the constants and not the order of
-the bounds. It should be read with two caveats: the per-iteration cost of
-assembling and spectrally processing the curvature matrix is not reflected in
-the evaluation count, so the wall-clock benefit is smaller than the counts
-suggest; and the solution quality is essentially the same for both variants.
+complexity analysis, in which the curvature enters only the constants and not the order of
+the bounds. It should be read with two caveats. First, the per-iteration cost of
+assembling, diagonalizing, shifting and rescaling one curvature matrix per
+active component is not reflected in the evaluation count; measuring it directly
+(Section~\ref{subsec:time}) shows that on the affine model, where the counts are
+identical, the second-order variant costs some $35\%$ more CPU time, while on
+the nonlinear model the iteration savings outweigh the overhead and it is $17\%$
+faster in the mean, though only marginally so, or slightly slower, in the
+median. Second, the solution quality is essentially the same for both variants,
+with the first-order method reaching somewhat lower values once the outliers
+have been discarded.
 
 The reason the curvature does not change the order is structural. The Tikhonov
 term $\sigma\|x - \bar x\|^2$ makes the model an upper approximation of $f$ once
@@ -944,8 +1159,9 @@ genuinely improve the order is to replace the quadratic regularization by a
 cubic one, $\tfrac{\sigma}{3}\|x - \bar x\|^3$, in the spirit of the
 cubic-regularization method of \cite{nesterov} and the high-order regularized
 models of \cite{bgmst1, bgms}. With accurate second-order information---the true
-or Gauss--Newton Hessian of each active component rather than an arbitrary
-bounded $B$---and under the additional assumption that the component Hessians are
+or Gauss--Newton Hessian of each active component, used unmodified rather than
+shifted and rescaled to meet an arbitrary bound $M$---and under the additional
+assumption that the component Hessians are
 Lipschitz continuous, the cubic model is an upper approximation with a step of
 size $O(\epsilon^{1/2})$ and a per-iteration decrease of order $\epsilon^{3/2}$,
 which would improve the iteration bound to $O(\epsilon^{-3/2})$. Realizing this
@@ -957,6 +1173,36 @@ tracking the interaction of the improved $\epsilon$-dependence with $\delta$, is
 a promising direction in which the curvature would acquire a provable role, at
 the price of a stronger smoothness assumption, accurate second-order information,
 and a cubically regularized subproblem.
+
+\section*{Declarations}
+
+\noindent\textbf{Funding.} This work was funded by the Vice-Rectorate for
+Research, Outreach and Social Projection of the University of the Atlantic
+through the 2022 Internal Call for Proposals to Strengthen Research Groups with
+Tools for Creation, Innovation, and Research.
+
+\medskip
+\noindent\textbf{Competing interests.} The authors declare that they have no
+competing interests.
+
+\medskip
+\noindent\textbf{Author contributions.} All authors contributed to the
+conception and design of the study, to the analysis, and to the writing of the
+manuscript. All authors read and approved the final manuscript.
+
+\medskip
+\noindent\textbf{Data availability.} The polynomial data set of
+Section~\ref{subsec:poly} is the one of \cite{dunder1}. The data of
+Section~\ref{subsec:bard} consist of the $15$ observations of the Bard function
+listed in \cite{mgh} together with four outliers generated with a fixed random
+seed, as described there. Both data sets are included in the repository cited
+below.
+
+\medskip
+\noindent\textbf{Code availability.} The Fortran~90 implementation of
+Algorithm~\ref{alg:main}, the data files, and the scripts that reproduce every
+table and figure of Section~\ref{sec:numerical} are openly available at
+\url{https://github.com/gdquintero/ovoqnewton}.
 
 \clearpage
 
