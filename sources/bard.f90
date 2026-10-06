@@ -409,29 +409,16 @@
                 iter_sub = iter_sub + 1
             end do ! End of internal iterations
     
-            opt_cond(:) = 0.0d0
-            nu_l(:) = 0.0d0
-            nu_u(:) = 0.0d0
-    
-            do j = 1, n-1
-                if (xtrial(j) .le. l(j)) then 
-                    do i = 1, m
-                        nu_l(j) = nu_l(j) + lambda(i) * grad(i,j)
-                    end do
-                else if (xtrial(j) .ge. u(j)) then
-                    do i = 1, m
-                        nu_u(j) = nu_u(j) - lambda(i) * grad(i,j)
-                    end do
-                end if
-            end do
-    
+            ! Stopping test (Step 5 of Algorithm 2.1):
+            !   theta_k = max_i || (B_{k,j_k,i} + sigma_k I) (x^{k+1} - x^k) ||,
+            ! over the active set, with the same (shifted and rescaled) matrices used
+            ! in the subproblem; it reduces to sigma_k * ||x^{k+1} - x^k|| for B = 0.
+            ! No Lagrange multipliers of the subproblem are needed.
+            terminate = 0.0d0
             do i = 1, m
-                opt_cond(:) = opt_cond(:) + lambda(i) * grad(i,:)
-            enddo
-    
-            opt_cond(:) = opt_cond(:) + nu_u(:) - nu_l(:)
-            terminate = norm2(opt_cond)
-            ! terminate = norm2(xk-xtrial)
+                terminate = max(terminate, norm2(matmul(hess(i,:,:), xtrial(1:n-1) - xk(1:n-1)) &
+                    + sigma * (xtrial(1:n-1) - xk(1:n-1))))
+            end do
 
             if (print_iter) then
 

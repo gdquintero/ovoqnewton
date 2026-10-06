@@ -5,3 +5,10 @@ sources/sort
 sources/subset
 sources/salida.txt
 sources/param.txt
+__pycache__/
+benchmark/src/ovo_bench
+benchmark/src/test_derivs
+benchmark/results/adaptive_trials/
+benchmark/results/split/
+benchmark/results/*.png
+benchmark/results_*.log
