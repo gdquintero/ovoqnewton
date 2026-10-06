@@ -1,0 +1,21 @@
+% main benchmark: 42 test problems
+First-order & -- & -- & 26 & 35 & 2.49 & 28.6 & 4 & 30 \\
+Shifted Hessian & $1$ & rescale & 31 & 36 & 2.67 & 64.8 & 6 & 25 \\
+Shifted Hessian & $10^4$ & rescale & 25 & 31 & 8.90 & 197.4 & 79 & 22 \\
+Gauss--Newton & $10^4$ & rescale & 25 & 32 & 2.86 & 41.2 & 4 & 22 \\
+Shared BFGS & $10^4$ & rescale & 26 & 34 & 2.80 & 54.0 & 6 & 21 \\
+% sensitivity to M: 42 test problems
+First-order & -- & -- & 20 & 35 & 2.49 & 28.6 & 4 & 30 \\
+Shifted Hessian & $0.1$ & rescale & 17 & 34 & 4.38 & 49.6 & 11 & 22 \\
+Shifted Hessian & $1$ & rescale & 25 & 36 & 2.67 & 64.8 & 6 & 25 \\
+Shifted Hessian & $10$ & rescale & 19 & 33 & 2.75 & 28.2 & 5 & 21 \\
+Shifted Hessian & $10^2$ & rescale & 23 & 32 & 4.32 & 59.1 & 8 & 33 \\
+Shifted Hessian & $10^4$ & rescale & 20 & 31 & 8.90 & 197.4 & 79 & 22 \\
+Shifted Hessian & $1$ & clip & 21 & 35 & 4.94 & 71.8 & 6 & 41 \\
+Shifted Hessian & $10$ & clip & 19 & 33 & 6.13 & 94.5 & 38 & 35 \\
+Shifted Hessian & $\sigma_{k,j}$ & adaptive & 20 & 37 & 2.18 & 18.7 & 3 & 26 \\
+Shifted Hessian & $10\,\sigma_{k,j}$ & adaptive & 23 & 37 & 2.47 & 21.3 & 9 & 17 \\
+Shifted Hessian & $10^2\sigma_{k,j}$ & adaptive & 20 & 35 & 4.12 & 77.6 & 21 & 17 \\
+Gauss--Newton & $1$ & rescale & 21 & 36 & 2.76 & 38.0 & 4 & 22 \\
+Gauss--Newton & $10^4$ & rescale & 21 & 32 & 2.86 & 41.2 & 4 & 22 \\
+Shared BFGS & $10^4$ & rescale & 19 & 34 & 2.80 & 54.0 & 6 & 21 \\
