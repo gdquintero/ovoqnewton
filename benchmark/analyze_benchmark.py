@@ -28,6 +28,7 @@ import matplotlib.pyplot as plt
 plt.rcParams.update({"font.size": 11})
 plt.rcParams["axes.unicode_minus"] = False
 plt.rcParams["mathtext.fontset"] = "cm"
+plt.rcParams["mathtext.fallback"] = "stix"  # glyphs missing in cm, e.g. the en dash
 plt.rcParams["font.family"] = "serif"
 plt.rcParams["font.serif"] = ["cmr10", "STIXGeneral", "DejaVu Serif"]
 plt.rcParams["axes.formatter.use_mathtext"] = True
@@ -38,7 +39,7 @@ RES = os.path.join(HERE, "results")
 FTOL = 1.0e-3     # relative tolerance on the best f* for a problem to count as solved
 LABELS = {"FO": "First-order ($B=0$)",
           "H": r"Shifted Hessian, $M=10^4$",
-          "GN": r"Gauss--Newton, $M=10^4$",
+          "GN": r"Gauss-Newton, $M=10^4$",
           "QN": r"Shared BFGS, $M=10^4$",
           "H1": r"Shifted Hessian, $M=1$"}
 STYLES = {"FO": ("k", "-"), "H": ("C0", (0, (1, 1))), "GN": ("C1", "-."),

@@ -21,6 +21,7 @@ import matplotlib.pyplot as plt
 plt.rcParams.update({"font.size": 11})
 plt.rcParams["axes.unicode_minus"] = False
 plt.rcParams["mathtext.fontset"] = "cm"
+plt.rcParams["mathtext.fallback"] = "stix"  # glyphs missing in cm, e.g. the en dash
 plt.rcParams["font.family"] = "serif"
 plt.rcParams["font.serif"] = ["cmr10", "STIXGeneral", "DejaVu Serif"]
 plt.rcParams["axes.formatter.use_mathtext"] = True
@@ -59,7 +60,7 @@ def main():
     fig, ax = plt.subplots(figsize=(6.0, 3.8))
     marks = {"Bennett5_10": "o", "Kirby2_10": "s", "ENSO_10": "^", "Gauss1_10": "D"}
     cols = {"FO": "k", "H1": "C3", "GN1": "C1"}
-    names = {"FO": "First-order", "H1": r"Shifted Hessian, $M=1$", "GN1": r"Gauss--Newton, $M=1$"}
+    names = {"FO": "First-order", "H1": r"Shifted Hessian, $M=1$", "GN1": r"Gauss-Newton, $M=1$"}
     for v in VARS:
         for inst, lab, n in INST:
             xs = [S[(inst, d, "FO")]["m"] for d in DELTAS]
