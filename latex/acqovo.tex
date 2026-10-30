@@ -66,10 +66,13 @@ vanish. We prove that the method is well defined and attains worst-case
 iteration- and evaluation-complexity bounds of the same order as the
 first-order method, the curvature entering only the constants. On
 robust-fitting problems from the literature and from the NIST nonlinear
-regression collection, a suitably bounded curvature improves the robustness of
-the multistart at a moderate cost, the shifted exact Hessian without an
-effective bound is harmful, and a bound proportional to the regularization
-parameter is the most efficient choice. The benefit is problem dependent.
+regression collection, a suitably bounded curvature reaches the best value
+found among the tested variants more often than the first-order method, at
+the price of more evaluations and CPU time; the shifted exact Hessian without
+an effective bound is harmful; and a bound proportional to the regularization
+parameter is the most efficient choice, in evaluations and in CPU time. The
+benefit is problem dependent, and fewer iterations or evaluations do not
+always mean less computing time.
 
 \medskip
 \noindent
@@ -173,7 +176,7 @@ since this constant grows with $M$, the curvature does not improve it either. Th
 be faster; it only guarantees that its worst-case bound has the same order,
 whatever admissible matrices are used. Any practical advantage of the curvature must come from
 problems that are far from the worst case, and can only be a constant-factor
-one: fewer iterations or evaluations, or better minimizers reached, on problems
+one: fewer iterations or evaluations, or lower values of the objective reached, on problems
 where the first-order model is a poor local approximation. Whether such an
 advantage materializes, and at what cost per iteration, is a separate question,
 which we examine empirically on parameter-estimation problems in the presence
@@ -872,6 +875,51 @@ Algorithm~\ref{alg:main} is at most
 \]
 that is, $O(\delta^{-2}\epsilon^{-2}|\log\delta|)$, as for the first-order method.
 
+The bound $M$ enters Theorem~\ref{teo:complexity} only through
+\eqref{cota-iter}. The step bound \eqref{ccotasub} and
+Theorem~\ref{teo:suff-descent} use $B_{k,j,i} \succeq 0$ but not
+$\|B_{k,j,i}\| \leq M$, so $\sigma_{\max}$ in \eqref{cota-sigma} does not
+depend on $M$. This allows a bound on the curvature that grows with the
+regularization parameter.
+
+\begin{corollary} \label{cor:adaptive}
+Let $c > 0$, and suppose that, instead of $\|B_{k,j,i}\| \leq M$, the matrices
+chosen at Step~2 are symmetric, positive semidefinite, and satisfy
+$\|B_{k,j,i}\| \leq c\,\sigma_{k,j}$. Then, under the assumptions of
+Theorem~\ref{teo:complexity}, the conclusions of that theorem hold with
+$M = c\,\sigma_{\max}$. In particular, Algorithm~\ref{alg:main} stops at
+Step~5 after at most
+\[
+\left\lfloor \frac{(1 + c)^2 \sigma_{\max}^2}{\alpha}
+\cdot \frac{f(x^0) - \flow}{\epsilon^2} \right\rfloor + 1
+\]
+outer iterations. Moreover, the box multipliers of Corollary~\ref{cor:step}
+satisfy $\max_{i} |\nu^u_i - \nu^\ell_i| \leq c_\nabla(3 + 2c)$.
+\end{corollary}
+
+\begin{proof}
+For each $k$ and $j$, the family $\mathcal{B}_{k,j}$ is admissible with the
+constant $c\,\sigma_{k,j}$ in place of $M$. Since \eqref{ccotasub} and
+Theorem~\ref{teo:suff-descent} do not depend on this constant, the proof of
+\eqref{cota-sigma} applies unchanged and gives
+$\sigma_{k,j} \leq \sigma_k \leq \sigma_{\max}$ for all $k$ and
+$j = 0, \ldots, j_k$. Hence $\|B_{k,j,i}\| \leq c\,\sigma_{\max}$ for all $k$,
+$j$ and $i$: every family used by the algorithm is admissible with
+$M = c\,\sigma_{\max}$, a constant that depends only on $c$, $\gamma$,
+$\sigma_{\min}$, $\alpha$, $\delta$, $L$ and $c_\nabla$, and not on the
+iterates. Since no step of Algorithm~\ref{alg:main} uses the value of $M$, the
+run is a run of Algorithm~\ref{alg:main} with this $M$, and
+Theorem~\ref{teo:complexity} applies, with
+$(M + \sigma_{\max})^2 = (1 + c)^2\sigma_{\max}^2$. The bound on the
+multipliers follows from the proof of Lemma~\ref{lem:step}, with
+$\|\bar{B}_{k,j}\| \leq c\,\sigma_{k,j}$ in place of
+$\|\bar{B}_{k,j}\| \leq M$.
+\end{proof}
+
+With respect to the first-order method, the adaptive bound multiplies the
+constant of \eqref{cota-iter} by $(1 + c)^2$ and leaves the order of the bound
+unchanged. It is tested in Section~\ref{subsec:M}.
+
 \medskip
 \noindent\textbf{Relation to the quasi-Newton method of \cite{yano1}.}
 Both Algorithm~\ref{alg:main} and the quasi-Newton method of \cite{yano1}
@@ -1010,11 +1058,38 @@ with the same random seed, so that any difference is attributable to $B$.
 
 Two safeguards, outside the theory of Section~\ref{sec:complexity}, protect the
 implementation against floating-point effects and excessive running times. The
-run is stopped after $10^4$ outer iterations. If the sufficient decrease
-condition \eqref{ovo-armijo} still fails after $100$ increases of
-$\sigma_{k,j}$, which by Theorem~\ref{teo:suff-descent} can only happen through
-rounding errors once $\|x^{k,j}_{\mathrm{trial}} - x^k\|$ is negligible, the
-trial point is accepted. We report how often each safeguard is activated.
+run is stopped after $10^4$ outer iterations or when a CPU-time limit is
+reached ($30$ minutes per run, $10$ minutes in the study of
+Table~\ref{tab:active}). If the sufficient decrease condition
+\eqref{ovo-armijo} still fails at the $100$th trial point, that is, after $99$
+increases of $\sigma_{k,j}$, this trial point is accepted. At that point
+$\sigma_{k,j} = \sigma_{\min}\gamma^{99} \approx 1.6 \times 10^{68}$, which for
+these problems lies far above the threshold \eqref{este}, so by
+Theorem~\ref{teo:suff-descent} this cannot happen in exact arithmetic with
+exact subproblem solutions; in practice it happens
+through rounding errors or the inexact solution of the subproblem, once
+$\|x^{k,j}_{\mathrm{trial}} - x^k\|$ is negligible. We report how often each
+safeguard is activated. Neither of them was activated in the experiments of
+Sections~\ref{subsec:poly}--\ref{subsec:sens} or in the experiment on $\tau$
+at the end of Section~\ref{subsec:M}.
+
+The results of Section~\ref{sec:complexity} are statements about
+Algorithm~\ref{alg:main} as stated, in exact arithmetic and with exact
+subproblem solutions. They do not apply automatically to every run of the
+safeguarded implementation. When the inner-loop safeguard is activated, the
+accepted point need not satisfy \eqref{ovo-armijo}, and $\sigma_k$ exceeds the
+bound \eqref{cota-sigma}; the bounds \eqref{cota-fcnt} and \eqref{cota-iter}
+on evaluations and iterations are then no longer guaranteed for that run. The
+certificate at the returned point is not affected: Lemma~\ref{lem:transfer}
+uses $\theta_k \leq \epsilon$, $\sigma_k \geq \sigma_{\min}$ and the
+optimality conditions \eqref{theta-kkt} of the subproblem, but not
+\eqref{ovo-armijo}. Hence every run that stops at Step~5, whether or not the
+inner-loop safeguard was activated earlier, returns a point that satisfies
+$C_{\delta',\epsilon'}$ with the constants \eqref{transfer-const}, up to the
+accuracy with which the last subproblem is solved. A run stopped by the
+iteration or time limit, or by a failure of the subproblem solver, carries no
+such certificate. These runs enter the totals of evaluations and CPU time, but
+never the reported values of $f(x^*)$ or the counts of solved problems.
 
 We distinguish three measures of cost throughout. The \emph{iteration count}
 (\#it) is the number of outer iterations, the quantity bounded in
@@ -1129,8 +1204,8 @@ the rescaling to norm $M$ reduces it by up to three orders of magnitude. Second,
 the undamped curvature does not help either: in the benchmark of
 Section~\ref{subsec:bench}, where $M=10^4$ leaves the matrices unscaled, the
 shifted Hessian and the Gauss--Newton matrix (which coincide on this model)
-reach a slightly worse best value than the first-order method at a similar
-cost. We turn next to a model that is genuinely nonlinear in the parameters, where
+reach a higher best value than the first-order method ($7.59 \times 10^{-2}$
+against $5.89 \times 10^{-2}$) with a similar number of evaluations. We turn next to a model that is genuinely nonlinear in the parameters, where
 the first-order model is a poorer local approximation, to examine whether the
 additional curvature translates into a practical advantage.
 
@@ -1248,7 +1323,7 @@ evaluation count. Summing the per-$o$ means of Table~\ref{tab:bard} over
 $o = 1, \dots, 6$ gives $232$ iterations and $296$ evaluations for the
 first-order method against $134$ and $179$ for the second-order variant; the
 corresponding sums of the per-$o$ medians are $43.5$ and $115$ against $40.5$
-and $86$. The mean gap is sizeable---the first-order method uses about $1.7$
+and $86$. The mean gap is sizable---the first-order method uses about $1.7$
 times as many iterations and evaluations---but it is driven by a heavy tail of
 slow first-order runs at $o = 1$ (mean iteration count $152$ against $39$, with
 medians $10.5$ and $7$), which the curvature mitigates. The medians, robust to
@@ -1304,7 +1379,7 @@ summed over the sweep in $o$. For each $o$
 the mean and median over the $100$ starting points are taken, as in
 Tables~\ref{tab:poly} and~\ref{tab:bard}, and those values are then summed. The
 ratio columns give second-order over first-order, so that values below $1$
-favour the second-order variant.}
+favor the second-order variant.}
 \label{tab:time}
 \end{table}
 
@@ -1318,9 +1393,10 @@ slower in the mean and $10\%$ slower in the median, and over the whole sweep it
 is $10\%$ slower in the mean and $4\%$ faster in the median. The picture is
 again not uniform: at $o = 1$, where the curvature shortens the heavy tail of
 slow first-order runs, the second-order variant is about three times faster in
-the mean ($4.7$ against $15.5$\,ms), but at $o = 2$, $4$ and $6$ it is slower,
-both because its mean iteration counts are higher there and because each of its
-iterations is more expensive. Since the typical run of either method
+the mean ($4.7$ against $15.5$\,ms), but at $o = 2$, $4$ and $6$ it is $1.8$ to
+$4$ times slower, both because its mean iteration counts are higher there and
+because each of its iterations is more expensive; at $o = 3$ and $5$ the two
+means differ by less than $5\%$. Since the typical run of either method
 terminates in a handful of iterations, this per-iteration overhead is rarely
 amortized. On problems of this size, the
 reduction in iteration and evaluation counts obtained with the curvature should
@@ -1330,7 +1406,7 @@ We note that these times are of the order of tens of milliseconds and, being
 averages over $100$ runs of a single sweep, carry some machine noise; the
 ratios, not the absolute values, are the meaningful quantity.
 
-\subsection{Sensitivity to $\delta$ and $\sigma_{\min}$} \label{subsec:sens}
+\subsection{Sensitivity to \texorpdfstring{$\delta$ and $\sigma_{\min}$}{delta and sigma\_min}} \label{subsec:sens}
 
 The band half-width $\delta$ and the initial regularization $\sigma_{\min}$ are
 chosen by trial and error, so it is natural to ask how much of the above depends
@@ -1379,9 +1455,10 @@ solution identified exactly the four added outliers.}
 Three things are stable across the table. The four outliers are identified
 exactly in every one of the $24$ runs. The drop in $f(x^*)$ between $o=3$ and
 $o=4$ is never smaller than two orders of magnitude, ranging from $168\times$ to
-$270\times$. And the value of $f(x^*)$ at the plateau and at the floor varies
-only in the third significant digit. The identification of the outliers, which
-is what the method is used for, is therefore not an artefact of the particular
+$270\times$. And the plateau value at $o = 3$ varies by less than $2\%$, while
+the value at $o = 4$ stays between $1.3 \times 10^{-3}$ and
+$2.1 \times 10^{-3}$, always far below it. The identification of the outliers, which
+is what the method is used for, is therefore not an artifact of the particular
 $\delta$ and $\sigma_{\min}$ reported in Section~\ref{subsec:bard}.
 
 The counts, by contrast, do depend on the parameters. Decreasing $\delta$
@@ -1410,6 +1487,9 @@ $\sigma_{\min}=10^{-3}$. Part of the benefit of the curvature reported in
 Section~\ref{subsec:bard} is therefore a compensation for an over-regularized
 first-order model: when $\sigma_{\min}$ is small, the first-order method already
 takes long steps, and the curvature no longer reduces the number of iterations.
+Table~\ref{tab:sens} reports counts only; as Section~\ref{subsec:time} showed
+for $\delta = \sigma_{\min} = 10^{-1}$, lower counts on this problem did not
+translate into a lower CPU time.
 
 \subsection{An extended benchmark} \label{subsec:bench}
 
@@ -1473,7 +1553,10 @@ need not coincide with those of Tables~\ref{tab:poly} and~\ref{tab:bard}. A vari
 the best value $f(x^*)$ of its ten runs that stopped at Step~5 is within a
 relative tolerance of $10^{-3}$ of the best value found by any variant; its
 cost is the total number of evaluations, or the total CPU time, of the ten
-runs. We compare the first-order method with the three curvature families
+runs. This is a relative criterion, which compares the variants with one
+another: the best value found is not known to be a global minimum, so a solved
+test problem is one on which the variant matched the best result of the
+comparison, not one on which a global minimizer was certified. We compare the first-order method with the three curvature families
 described at the beginning of this section: the shifted Hessian and the
 Gauss--Newton and shared BFGS matrices with $M = 10^4$, a value large enough
 for the bound to be practically inactive, and the shifted Hessian with $M = 1$,
@@ -1502,11 +1585,12 @@ Shared BFGS & $10^4$ & rescale & 26 & 34 & 2.80 & 54.0 & 6 & 21 \\
 }
 \caption{Extended benchmark ($42$ test problems, $420$ runs per variant).
 \emph{solved}: test problems on which the best value of the multistart is
-within $10^{-3}$ of the best value of any variant; \emph{identified}: test
+within $10^{-3}$ of the best value of any variant (a relative criterion, not a
+certificate of global optimality); \emph{identified}: test
 problems on which the best run discards exactly the added outliers;
 \#fcnt and CPU: totals over all runs; \emph{limit}: runs stopped by the
 iteration or time limit, or in which the subproblem solver failed; \emph{safeguard}: runs in which a trial point was
-accepted after $100$ increases of $\sigma_{k,j}$. The CPU time of the shifted
+accepted after $99$ increases of $\sigma_{k,j}$. The CPU time of the shifted
 Hessian with $M=1$ includes $30$ minutes charged to the run in which
 the subproblem solver failed to return (see the text); without it, the total
 is $34.8$ minutes.}
@@ -1528,13 +1612,17 @@ Three observations stand out. First, the shifted Hessian with $M=1$ is the most
 robust variant: it solves $31$ of the $42$ test problems, against $26$ for the
 first-order method, and identifies the outliers in $36$ of them, against $35$.
 Comparing the best values directly (relative tolerance $10^{-3}$), it reaches
-a better minimizer than the first-order method on $13$ test problems (from
+a lower value of $f$ than the first-order method on $13$ test problems (from
 Misra1a, Lanczos3, MGH17, Kirby2, Bennett5, ENSO and the polynomial) and a
-worse one on $5$ (from Bard, Lanczos3, MGH17 and Kirby2). It is also the most efficient:
-it has the smallest cost on $36\%$ of the test problems, against $29\%$ for the
-first-order method, and a cost within twice the smallest on $74\%$, against
-$60\%$. Its total cost exceeds that of the first-order method by $7\%$ in
-evaluations and, excluding the failed run, by $22\%$ in CPU time.
+higher one on $5$ (from Bard, Lanczos3, MGH17 and Kirby2). In the profiles it
+is also the most efficient variant, in both measures: it has the smallest
+number of evaluations on $36\%$ of the test problems and the smallest CPU time
+on $33\%$, against $29\%$ and $26\%$ for the first-order method, and it is
+within twice the smallest on $74\%$ and $71\%$, against $60\%$ and $57\%$.
+Its totals, however, exceed those of the first-order method by $7\%$ in
+evaluations and, excluding the failed run, by $22\%$ in CPU time: the profiles
+compare costs problem by problem, whereas the totals are dominated by the most
+expensive problems.
 
 Second, curvature without an effective bound is harmful. The shifted Hessian
 with $M=10^4$ solves fewer test problems than the first-order method, uses
@@ -1547,17 +1635,20 @@ additional regularization and shortens the steps. Section~\ref{subsec:M}
 examines this effect.
 
 Third, the Gauss--Newton and shared BFGS matrices, which need no shift, behave
-much like the first-order method: they solve $25$ and $26$ test problems at a
-cost $12$--$15\%$ higher in evaluations. On the well-scaled problems (Chwirut2,
-ENSO, Gauss1) all variants reach the same minimizers at similar costs.
+much like the first-order method: they solve $25$ and $26$ test problems, with
+$12$--$15\%$ more evaluations and $44$--$89\%$ more CPU time. On Chwirut2, all
+variants reach the same best values, with numbers of evaluations that differ by
+at most $6\%$ and less than one second of CPU time per multistart.
 
 Overall, the extended benchmark confirms and qualifies the picture of the
-previous sections. A suitably bounded curvature improves the robustness of the
-multistart and, on several problems, the quality of the minimizer found, at a
-moderate cost; but the benefit depends on the problem and on how the size of
-the curvature is controlled, and no variant dominates the others on every
-problem. Section~\ref{subsec:M} shows that a bound proportional to the
-regularization parameter retains this robustness at a lower cost.
+previous sections. A suitably bounded curvature makes the multistart reach the
+best value found more often and, on several problems, a lower value of $f$, at
+the price of a moderate increase in evaluations and a larger one in CPU time;
+but the benefit depends on the problem and on how the size of the curvature is
+controlled, and no variant dominates the others on every problem.
+Section~\ref{subsec:M} shows that a bound proportional to the regularization
+parameter retains most of this robustness with fewer evaluations and less CPU
+time.
 
 Regarding the safeguards, over the fourteen variants of this section and
 Section~\ref{subsec:M}, the iteration limit was reached in $3$ to $11$ runs per
@@ -1565,7 +1656,9 @@ variant, except for the shifted Hessian with $M=10^4$ ($79$ runs), with $M=10$
 under eigenvalue clipping ($38$ runs) and with the adaptive bound for
 $c = 10^2$ ($20$ runs), and the inner-loop safeguard was activated in $17$ to
 $41$ runs per variant, always once $\|x^{k,j}_{\mathrm{trial}} - x^k\|$ had
-become negligible. In two runs out of $5880$, both on Gauss1 (with the shifted
+become negligible. Of the $354$ runs in which the inner-loop safeguard was
+activated, $293$ still stopped at Step~5, so their final points satisfy
+$C_{\delta',\epsilon'}$ by Lemma~\ref{lem:transfer}. In two runs out of $5880$, both on Gauss1 (with the shifted
 Hessian, once with $M=1$ and once with the adaptive bound for $c = 10^2$),
 Algencan failed to return from one subproblem; each of these runs is counted as
 unsuccessful and charged with the CPU-time limit of $30$ minutes.
@@ -1580,7 +1673,11 @@ $\delta \in \{10^{-1}, 1, 10, 10^2, 10^3\}$, which increases the mean size of
 $I_\delta(x^k)$ up to the whole set of observations. Table~\ref{tab:active}
 reports the CPU time per subproblem, that is, the total CPU time divided by the
 number of trial points, each of which requires one subproblem and one
-evaluation of $f$.
+evaluation of $f$. In the $599$ runs that enter the table (one run, described
+in the caption, is excluded), the inner-loop safeguard was activated in $18$,
+and two runs (Kirby2 with $\delta = 10^{-1}$, with the shifted Hessian and with
+the Gauss--Newton matrix) reached the time limit; since the table reports a
+cost per subproblem, these runs are included.
 
 \begin{table}[ht!]
 \centering
@@ -1611,7 +1708,7 @@ ENSO & $10^{-1}$ & 4.5 & 0.46 & 0.49 & 0.47 & 1.06 & 1.03 \\
 Gauss1 & $10^{-1}$ & 4.1 & 1.08 & 1.11 & 1.10 & 1.03 & 1.02 \\
  & $10^{0}$ & 5.3 & 1.39 & 1.22 & 1.38 & 0.88 & 1.00 \\
  & $10^{1}$ & 7.3 & 2.19 & 2.16 & 1.80 & 0.98 & 0.82 \\
- & $10^{2}$ & 10.8 & 1.82 & 10.66 & 9.75 & 5.86 & 5.37 \\
+ & $10^{2}$ & 18.6 & 11.62 & 10.66 & 9.75 & 0.92 & 0.84 \\
  & $10^{3}$ & 109.4 & 14.74 & 27.97 & 15.26 & 1.90 & 1.04 \\
 \hline
 \end{tabular}%
@@ -1635,10 +1732,12 @@ set. This cost, common to all variants, comes from the solution of the
 subproblem, whose number of constraints is $|I_\delta(x^k)|$. Second, the
 overhead of the curvature per subproblem does not grow with the size of the
 active set. Over the twenty settings, the median ratio to the first-order
-method is $1.10$ for the shifted Hessian and $1.07$ for the Gauss--Newton
-matrix. The largest ratios (up to $5.9$, on Gauss1 with $\delta = 10^2$)
-correspond to settings in which the subproblems with curvature require more
-work from the solver, not to larger active sets. Since $n \leq 9$ here,
+method is $1.10$ for the shifted Hessian and $1.05$ for the Gauss--Newton
+matrix. The largest ratios, $1.92$ for the shifted Hessian and $1.80$ for the
+Gauss--Newton matrix (both on ENSO, with $\delta = 10$ and $\delta = 10^2$,
+respectively), are moderate, and the largest active sets do not produce them:
+with all the observations active (Bennett5 with $\delta \geq 10^2$ and ENSO
+with $\delta = 10^3$), the ratios lie between $0.46$ and $1.23$. Since $n \leq 9$ here,
 building the curvature matrices (one eigenvalue decomposition per active
 component for the shifted Hessian) is cheap compared with solving the
 subproblem. For larger $n$, the $O(n^3)$ cost per active component would
@@ -1646,7 +1745,7 @@ become significant; the Gauss--Newton matrix, whose norm is
 $\|\nabla r_i\|^2$ and which needs no decomposition, or a matrix shared by all
 components, would then be preferable.
 
-\subsection{The role of the bound $M$} \label{subsec:M}
+\subsection{The role of the bound \texorpdfstring{$M$}{M}} \label{subsec:M}
 
 The bound $\|B_{k,j,i}\|\le M$ is essential in the analysis, and the
 experiments above show that it is also decisive in practice. We first discuss
@@ -1661,11 +1760,16 @@ continuously differentiable components satisfy $\|\nabla^2 f_i\| \leq L$, so
 the shifted Hessian \eqref{shift} has norm at most $2L + \tau$: the choice
 $M = 2L + \tau$ makes the bound inactive for exact Hessians at the price of a
 constant factor in \eqref{cota-iter}. The theory thus gives no reason to
-prefer a small $M$; it only requires $M$ to be bounded. It also allows $M$ to
-vary, as long as it remains bounded: since Step~2 chooses $B_{k,j,i}$ after
-$\sigma_{k,j}$ is known, the adaptive rule $\|B_{k,j,i}\| \leq c\,\sigma_{k,j}$,
-with a fixed $c > 0$, is admissible with $M = c\,\sigma_{\max}$, and keeps the
-size of the curvature proportional to that of the regularization.
+prefer a small $M$; it only requires $M$ to be bounded. It also allows a bound
+that varies with the regularization: since Step~2 chooses $B_{k,j,i}$ after
+$\sigma_{k,j}$ is known, one can impose $\|B_{k,j,i}\| \leq c\,\sigma_{k,j}$,
+with a fixed $c > 0$, which keeps the size of the curvature proportional to
+that of the regularization. By Corollary~\ref{cor:adaptive}, this adaptive rule
+is covered by the theory with $M = c\,\sigma_{\max}$: the uniform bound
+$\sigma_{k,j} \leq \sigma_{\max}$ of Theorem~\ref{teo:complexity}, which does
+not depend on $M$, gives $\|B_{k,j,i}\| \leq c\,\sigma_{\max}$ along the whole
+run, and the constant of \eqref{cota-iter} becomes
+$(1 + c)^2\sigma_{\max}^2$.
 
 \emph{Sensitivity experiment.} We repeated the benchmark of
 Section~\ref{subsec:bench} with the shifted Hessian for
@@ -1718,9 +1822,9 @@ Five conclusions can be drawn.
 monotonically.} Among the fixed bounds, $M = 1$ gives the most robust variant
 and the smallest number of evaluations; only $M = 10$ is cheaper in CPU time
 ($28.2$ against $34.8$ minutes, excluding the failed run), at a clear loss in
-robustness. With large $M$ the shift dominates and the cost grows sharply.
-With $M = 0.1$ the variant is less robust and more expensive than the
-first-order method itself. We do not have a complete explanation for this
+robustness. With large $M$ the shift dominates, and the number of evaluations
+and the CPU time grow sharply. With $M = 0.1$ the variant is less robust than
+the first-order method itself and needs more evaluations and more CPU time. We do not have a complete explanation for this
 case; it shows, at least, that a small bound does not simply reduce the method
 to its first-order counterpart.
 \item \emph{Rescaling preserves more information than clipping.} Rescaling
@@ -1732,21 +1836,25 @@ additional regularization. Accordingly, clipping is no more robust than
 rescaling and needs $1.8$ to $2.3$ times as many evaluations for the same $M$.
 \item \emph{The Gauss--Newton matrix is insensitive to $M$.} It needs no
 shift. With $M = 1$ and $M = 10^4$ it solves the same number of test problems
-($21$) at almost the same cost, although $M = 1$ identifies the outliers more
+($21$) with almost the same numbers of evaluations and CPU times, although
+$M = 1$ identifies the outliers more
 often ($36$ against $32$).
 \item \emph{Rescaling does distort the curvature when $\|B_{k,j,i}\| \gg M$.}
 For instance, on the polynomial of Section~\ref{subsec:poly} it reduces the
-curvature by up to three orders of magnitude. Nevertheless, a bounded,
-rescaled curvature performed better than an unbounded one in our tests.
+curvature by up to three orders of magnitude. Nevertheless, with every fixed
+bound $M \leq 10^2$, the rescaled curvature needed fewer evaluations and less
+CPU time than the unbounded one ($M = 10^4$), and with $M = 1$ and $M = 10^2$
+it was also more robust.
 \item \emph{The adaptive bound is the most efficient choice.} With $c = 10$, it
 solves $23$ test problems, as many as $M = 10^2$ and second only to the fixed
-bound $M = 1$ ($25$),
+bound $M = 1$ ($25$), and
 identifies the outliers in $37$, as many as with $c = 1$ and more than any
-other variant, and does so with
-$2.47 \times 10^6$ evaluations and $21.3$ minutes of CPU time, that is, at a
-lower cost than the first-order method ($2.49 \times 10^6$ evaluations and
-$28.6$ minutes) and than any fixed bound. With $c = 1$ it is the cheapest
-variant of all ($2.18 \times 10^6$ evaluations, $18.7$ minutes), with the
+other variant. It does so with about as many evaluations as the first-order
+method ($2.47$ against $2.49 \times 10^6$) and $25\%$ less CPU time ($21.3$
+against $28.6$ minutes), and with fewer evaluations and less CPU time than any
+fixed bound. With $c = 1$ it is the cheapest variant of all, both in
+evaluations and in CPU time ($2.18 \times 10^6$ evaluations, $18.7$ minutes),
+with the
 robustness of the first-order method. With $c = 10^2$ it behaves like a large
 fixed bound. Compared only with the first-order method and the fixed bound
 $M = 1$, the adaptive bound with $c = 10$ solves $30$ of the $42$ test
@@ -1760,8 +1868,8 @@ each inner loop, where $\sigma_{k,0} = \sigma_{\min} = 0.1$, and then grows
 with $\sigma_{k,j}$: when the regularization has to be increased, the
 curvature is allowed to increase with it, instead of becoming negligible. This
 choice needs no tuning to the scale of the problem, since $\sigma_{k,j}$ itself
-adapts to it, and it is admissible in the theory with
-$M = c\,\sigma_{\max}$. We therefore recommend it over a fixed $M$ chosen by
+adapts to it, and it is covered by the theory with $M = c\,\sigma_{\max}$
+(Corollary~\ref{cor:adaptive}). We therefore recommend it over a fixed $M$ chosen by
 trial and error. The adaptive bound, with $c = 1$ or $c = 10$, is the only
 configuration in our experiments in which the curvature reduces the CPU time
 appreciably with respect to the first-order method.
@@ -1776,28 +1884,34 @@ $o = 0$ is included), the four outliers being identified in all cases.
 
 \section{Final remarks} \label{sec:final}
 
-We have extended the first-order regularized method of \cite{alvarezovo} for
-box-constrained order-value optimization by enriching its model with curvature,
-each active component carrying its own positive semidefinite matrix of norm at
-most $M$. The resulting method is well defined and, under standard smoothness
-assumptions and without any assumption on the Lagrange multipliers of the
-subproblems (Lemma~\ref{lem:step}), attains worst-case iteration- and
+The main theoretical contribution of this paper is the incorporation of
+curvature information into the regularized framework of \cite{alvarezovo} for
+box-constrained order-value optimization while preserving the order of its
+worst-case complexity guarantees. It does not consist in improved complexity
+orders or in faster local convergence. The method generalizes that of
+\cite{alvarezovo} by giving each active component its own positive
+semidefinite matrix of norm at most $M$. It is well defined and, under standard
+smoothness assumptions and without any assumption on the Lagrange multipliers
+of the subproblems (Lemma~\ref{lem:step}), attains worst-case iteration- and
 evaluation-complexity bounds of the same order as its first-order counterpart
-(Theorem~\ref{teo:complexity}), of which it is a strict generalization; the curvature enters only through the
-constant $M$ in \eqref{cota-iter}, and not through the order of the bound. The
-curvature is thus accommodated at no cost in the order of the theoretical
-guarantees. Positive semidefiniteness and the bound $M$ are the only
+(Theorem~\ref{teo:complexity}); Corollary~\ref{cor:adaptive} extends them to
+curvature bounds proportional to the regularization parameter. The curvature
+enters only through the factor $(M + \sigma_{\max})^2$ in \eqref{cota-iter},
+which grows with $M$, so it improves neither the order of the bound nor its
+constant; and no local convergence rate has been established for the method.
+Positive semidefiniteness and the bound $M$ are the only
 requirements imposed on the matrices, so quasi-Newton updates such as BFGS or
 SR1, Gauss--Newton matrices and shifted exact Hessians all fit directly into the
 framework; individual positive semidefiniteness is used in
 Theorem~\ref{teo:suff-descent} to make the model an upper approximation of each
-active component, while only the convex combination $\bar{B}_{k,j}$ of
-Corollary~\ref{cor:step} enters the complexity bound.
+active component, and the bound $M$ enters the complexity bound through the
+stopping quantity $\theta_k$.
 
 The numerical experiments support a conditional conclusion: the curvature
 helps when the first-order model is a poor local approximation and the size of
 the curvature is suitably controlled, and it is neutral or harmful otherwise.
-On the affine polynomial model the curvature is redundant and only adds cost.
+On the affine polynomial model the curvature is redundant: the counts are
+essentially unchanged and the CPU time grows by about $27\%$.
 On the nonlinear Bard model, once outliers are being discarded, it reduces the
 iteration and evaluation counts by a factor of about $1.7$ in the mean, mainly
 by curbing a heavy tail of slow first-order runs, but this does not translate
@@ -1805,21 +1919,28 @@ into a shorter CPU time, and the advantage in iterations disappears when the
 first-order method is run with a small initial regularization
 (Section~\ref{subsec:sens}). On the broader benchmark of
 Section~\ref{subsec:bench}, the shifted Hessian with $M=1$ is the most robust
-variant, solving $31$ of $42$ test problems against $26$ for the first-order
-method at a similar cost, while the same matrices without an effective bound
-are by far the most expensive, and the Gauss--Newton and BFGS matrices behave
+variant: it reaches the best value found by any variant on $31$ of the $42$
+test problems, against $26$ for the first-order method, with $7\%$ more
+evaluations and $22\%$ more CPU time (excluding the failed run). The same
+matrices without an effective bound are by far the most expensive, in
+evaluations and in CPU time, and the Gauss--Newton and BFGS matrices behave
 much like the first-order method. Section~\ref{subsec:M} shows that $M$ is a
 decisive parameter: it caps the weight of the curvature relative to the
 regularization. An adaptive bound proportional to the regularization
 parameter, $\|B_{k,j,i}\| \le 10\,\sigma_{k,j}$, which is covered by the theory
-and needs no tuning, is nearly as robust as the best fixed bound; together
+(Corollary~\ref{cor:adaptive}) and needs no tuning, is nearly as robust as the best fixed bound; together
 with the same rule for $c = 1$, it is the only configuration in which the
 curvature reduced the CPU time appreciably with respect to the first-order
-method. These findings are consistent with the complexity analysis, in
-which the curvature affects only the constant of the bound and not its order:
-what can be expected from the curvature is a constant-factor gain, in
-efficiency or in the quality of the minimizer reached, on suitable problems,
-not a uniform improvement. The experiments also show that the constant of the
+method. Two qualifications apply to all these comparisons. Fewer iterations
+or evaluations did not necessarily mean less CPU time, since an iteration with
+curvature costs more. And a test problem counts as solved when a variant
+reaches the best value found by the tested variants, which is a relative
+criterion and not a certificate of global optimality. These findings are
+consistent with the complexity analysis, in which the curvature affects only
+the constant of the bound and not its order: what can be expected from the
+curvature is a constant-factor gain on suitable problems, in iterations,
+evaluations or CPU time, which need not go together, or in the value of $f$
+reached, not a uniform improvement. The experiments also show that the constant of the
 worst-case bound is not a guide to practical performance: with the adaptive
 bound, the factor $(M + \sigma_{\max})^2 = (1 + c)^2\sigma_{\max}^2$ in
 \eqref{cota-iter} grows with $c$, yet $c = 10$ was more robust than $c = 1$.
@@ -1923,7 +2044,7 @@ and a cubically regularized subproblem.
 
 \bibitem{gauvin} J. Gauvin, A necessary and sufficient regularity condition to have bounded multipliers in nonconvex programming, \textit{Mathematical Programming} 12, pp. 136--138, 1977.
 
-\bibitem{jorion} P. Jorion, \textit{Value at {R}isk: {T}he new benchmark for managing financial risk}, 3rd. ed., McGraw-Hill, 2009.
+\bibitem{jorion} P. Jorion, \textit{Value at {R}isk: {T}he new benchmark for managing financial risk}, 3rd ed., McGraw-Hill, New York, 2007.
 
 \bibitem{mtop} J. M. Mart\'{\i}nez, Generalized Order-Value Optimization, \textit{TOP} 20, pp. 75--98, 2012.
 
